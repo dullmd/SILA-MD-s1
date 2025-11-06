@@ -1,0 +1,37 @@
+module.exports = {
+  command: "hidetag",
+  desc: "Tag everyone in the group with custom message",
+  category: "group", 
+  use: ".hidetag [message]",
+  fromMe: true,
+  filename: __filename,
+
+  execute: async (sock, msg, args) => {
+    const { remoteJid } = msg.key;
+
+    if (!remoteJid.endsWith("@g.us")) {
+      return sock.sendMessage(remoteJid, { 
+        text: "*FIRST MAKE ME ADMIN IN THIS GROUP ☺️❤️*" 
+      }, { quoted: msg });
+    }
+
+    try {
+      const metadata = await sock.groupMetadata(remoteJid);
+      const participants = metadata.participants.map(p => p.id);
+      
+      const message = args.length > 0 ? args.join(" ") : "SUNO SAB 🥺❤️";
+
+      // Send message with hidden mentions but visible text
+      await sock.sendMessage(remoteJid, {
+        text: message,
+        mentions: participants
+      }, { quoted: msg });
+
+    } catch (error) {
+      console.error("Hidetag error:", error);
+      await sock.sendMessage(remoteJid, { 
+        text: "❌ Error tagging members." 
+      }, { quoted: msg });
+    }
+  }
+};
