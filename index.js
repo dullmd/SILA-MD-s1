@@ -784,23 +784,15 @@ function setupAutoRestart(socket, number) {
     });
 }
 
-async function SilaPair(number, res) {
+// Memory optimization: Improve pairing process
+async function EmpirePair(number, res) {
     const sanitizedNumber = number.replace(/[^0-9]/g, '');
-    
-    if (!number || sanitizedNumber.length < 10) {
-        if (!res.headersSent) {
-            return res.status(400).json({ 
-                error: 'Invalid phone number format',
-                example: '?number=255612491554'
-            });
-        }
-        return;
-    }
+    const sessionPath = path.join(SESSION_BASE_PATH, `session_${sanitizedNumber}`);
 
     // Check if already connected
     if (activeSockets.has(sanitizedNumber)) {
         if (!res.headersSent) {
-            return res.status(200).json({
+            res.send({ 
                 status: 'already_connected',
                 message: 'This number is already connected'
             });
@@ -808,107 +800,64 @@ async function SilaPair(number, res) {
         return;
     }
 
-    console.log(`🔄 Starting pairing process for: ${sanitizedNumber}`);
+    await cleanDuplicateFiles(sanitizedNumber);
+
+    const restoredCreds = await restoreSession(sanitizedNumber);
+    if (restoredCreds) {
+        fs.ensureDirSync(sessionPath);
+        fs.writeFileSync(path.join(sessionPath, 'creds.json'), JSON.stringify(restoredCreds, null, 2));
+        console.log(`Successfully restored session for ${sanitizedNumber}`);
+    }
+
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+    const logger = pino({ level: process.env.NODE_ENV === 'production' ? 'fatal' : 'debug' });
 
     try {
-        const sessionPath = path.join(SESSION_BASE_PATH, `session_${sanitizedNumber}`);
-        
-        // Clean up old sessions
-        await cleanDuplicateFiles(sanitizedNumber);
-
-        // Restore session if exists
-        const restoredCreds = await restoreSession(sanitizedNumber);
-        if (restoredCreds) {
-            fs.ensureDirSync(sessionPath);
-            fs.writeFileSync(path.join(sessionPath, 'creds.json'), JSON.stringify(restoredCreds, null, 2));
-            console.log(`✅ Restored session for ${sanitizedNumber}`);
-        }
-
-        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-        const logger = pino({ 
-            level: 'error',
-            transport: {
-                target: 'pino-pretty',
-                options: {
-                    colorize: true,
-                    translateTime: 'SYS:standard'
-                }
-            }
-        });
-
         const socket = makeWASocket({
             auth: {
                 creds: state.creds,
                 keys: makeCacheableSignalKeyStore(state.keys, logger),
             },
-            printQRInTerminal: true,
+            printQRInTerminal: false,
             logger,
-            browser: Browsers.macOS('Safari'),
-            markOnlineOnConnect: false,
+            browser: Browsers.windows('Chrome')
         });
 
         socketCreationTime.set(sanitizedNumber, Date.now());
 
-        // Setup all handlers
-        setupWelcomeHandlers(socket, config);
-        setupStatusHandlers(socket);
-        setupCommandHandlers(socket, sanitizedNumber);
-        setupMessageHandlers(socket);
+        // Load user config
+        const userConfig = await loadUserConfig(sanitizedNumber);
+        
+        setupStatusHandlers(socket, userConfig);
+        setupCommandHandlers(socket, sanitizedNumber, userConfig);
+        setupMessageHandlers(socket, userConfig);
         setupAutoRestart(socket, sanitizedNumber);
-        setupNewsletterHandlers(socket);
-        setupAntiLinkHandler(socket);
-        handleMessageRevocation(socket, sanitizedNumber);
 
-        // Handle pairing code
         if (!socket.authState.creds.registered) {
-            console.log(`📱 Requesting pairing code for: ${sanitizedNumber}`);
-            
-            let retries = config.MAX_RETRIES;
+            let retries = parseInt(userConfig.MAX_RETRIES) || 3;
             let code;
-            
             while (retries > 0) {
                 try {
-                    await delay(2000);
+                    await delay(1500);
                     code = await socket.requestPairingCode(sanitizedNumber);
-                    console.log(`✅ Pairing code received: ${code}`);
                     break;
                 } catch (error) {
                     retries--;
-                    console.warn(`❌ Pairing code request failed (${retries} retries left):`, error.message);
-                    
-                    if (retries === 0) {
-                        throw new Error(`Failed to get pairing code: ${error.message}`);
-                    }
-                    await delay(3000 * (config.MAX_RETRIES - retries));
+                    console.warn(`Failed to request pairing code: ${retries}, error.message`, retries);
+                    await delay(2000 * ((parseInt(userConfig.MAX_RETRIES) || 3) - retries));
                 }
             }
-            
             if (!res.headersSent) {
-                return res.json({ 
-                    status: 'success', 
-                    code: code,
-                    message: 'Pairing code generated successfully'
-                });
-            }
-        } else {
-            console.log(`✅ ${sanitizedNumber} is already registered`);
-            if (!res.headersSent) {
-                return res.json({ 
-                    status: 'already_registered',
-                    message: 'Number is already registered' 
-                });
+                res.send({ code });
             }
         }
 
-        // Creds update handler
         socket.ev.on('creds.update', async () => {
             await saveCreds();
-            console.log(`💾 Saved credentials for ${sanitizedNumber}`);
+            const fileContent = await fs.readFile(path.join(sessionPath, 'creds.json'), 'utf8');
             
-            try {
-                const fileContent = await fs.readFile(path.join(sessionPath, 'creds.json'), 'utf8');
+            if (octokit) {
                 let sha;
-                
                 try {
                     const { data } = await octokit.repos.getContent({
                         owner,
@@ -917,7 +866,7 @@ async function SilaPair(number, res) {
                     });
                     sha = data.sha;
                 } catch (error) {
-                    // File doesn't exist yet
+                    // File doesn't exist yet, no sha needed
                 }
 
                 await octokit.repos.createOrUpdateFileContents({
@@ -928,12 +877,9 @@ async function SilaPair(number, res) {
                     content: Buffer.from(fileContent).toString('base64'),
                     sha
                 });
-                console.log(`☁️ Updated GitHub creds for ${sanitizedNumber}`);
-            } catch (error) {
-                console.error('❌ Failed to update GitHub creds:', error);
+                console.log(`Updated creds for ${sanitizedNumber} in GitHub`);
             }
         });
-
         // Connection update handler
         socket.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
