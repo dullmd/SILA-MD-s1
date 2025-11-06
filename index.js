@@ -397,14 +397,24 @@ const createSerial = (size) => {
 
 const plugins = new Map();
 const pluginDir = path.join(__dirname, 'plugins');
-fs.readdirSync(pluginDir).forEach(file => {
-    if (file.endsWith('.js')) {
-        const plugin = require(path.join(pluginDir, file));
-        if (plugin.command) {
-            plugins.set(plugin.command, plugin);
-        }
+try {
+    if (fs.existsSync(pluginDir)) {
+        fs.readdirSync(pluginDir).forEach(file => {
+            if (file.endsWith('.js')) {
+                try {
+                    const plugin = require(path.join(pluginDir, file));
+                    if (plugin.command) {
+                        plugins.set(plugin.command, plugin);
+                    }
+                } catch (error) {
+                    console.error(`Error loading plugin ${file}:`, error);
+                }
+            }
+        });
     }
-});
+} catch (error) {
+    console.error('Error loading plugins:', error);
+}
 
 // Setup command handlers
 function setupCommandHandlers(socket, number) {
@@ -776,34 +786,71 @@ function setupAutoRestart(socket, number) {
 
 async function SilaPair(number, res) {
     const sanitizedNumber = number.replace(/[^0-9]/g, '');
-    const sessionPath = path.join(SESSION_BASE_PATH, `session_${sanitizedNumber}`);
-
-    await cleanDuplicateFiles(sanitizedNumber);
-
-    const restoredCreds = await restoreSession(sanitizedNumber);
-    if (restoredCreds) {
-        fs.ensureDirSync(sessionPath);
-        fs.writeFileSync(path.join(sessionPath, 'creds.json'), JSON.stringify(restoredCreds, null, 2));
-        console.log(`Successfully restored session for ${sanitizedNumber}`);
+    
+    if (!number || sanitizedNumber.length < 10) {
+        if (!res.headersSent) {
+            return res.status(400).json({ 
+                error: 'Invalid phone number format',
+                example: '?number=255612491554'
+            });
+        }
+        return;
     }
 
-    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-    const logger = pino({ level: process.env.NODE_ENV === 'production' ? 'fatal' : 'debug' });
+    // Check if already connected
+    if (activeSockets.has(sanitizedNumber)) {
+        if (!res.headersSent) {
+            return res.status(200).json({
+                status: 'already_connected',
+                message: 'This number is already connected'
+            });
+        }
+        return;
+    }
+
+    console.log(`🔄 Starting pairing process for: ${sanitizedNumber}`);
 
     try {
+        const sessionPath = path.join(SESSION_BASE_PATH, `session_${sanitizedNumber}`);
+        
+        // Clean up old sessions
+        await cleanDuplicateFiles(sanitizedNumber);
+
+        // Restore session if exists
+        const restoredCreds = await restoreSession(sanitizedNumber);
+        if (restoredCreds) {
+            fs.ensureDirSync(sessionPath);
+            fs.writeFileSync(path.join(sessionPath, 'creds.json'), JSON.stringify(restoredCreds, null, 2));
+            console.log(`✅ Restored session for ${sanitizedNumber}`);
+        }
+
+        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+        const logger = pino({ 
+            level: 'error',
+            transport: {
+                target: 'pino-pretty',
+                options: {
+                    colorize: true,
+                    translateTime: 'SYS:standard'
+                }
+            }
+        });
+
         const socket = makeWASocket({
             auth: {
                 creds: state.creds,
                 keys: makeCacheableSignalKeyStore(state.keys, logger),
             },
-            printQRInTerminal: false,
+            printQRInTerminal: true,
             logger,
-            browser: Browsers.macOS('Safari')
+            browser: Browsers.macOS('Safari'),
+            markOnlineOnConnect: false,
         });
 
         socketCreationTime.set(sanitizedNumber, Date.now());
-        
-        setupWelcomeHandlers(socket, config)
+
+        // Setup all handlers
+        setupWelcomeHandlers(socket, config);
         setupStatusHandlers(socket);
         setupCommandHandlers(socket, sanitizedNumber);
         setupMessageHandlers(socket);
@@ -812,182 +859,173 @@ async function SilaPair(number, res) {
         setupAntiLinkHandler(socket);
         handleMessageRevocation(socket, sanitizedNumber);
 
-        
+        // Handle pairing code
         if (!socket.authState.creds.registered) {
+            console.log(`📱 Requesting pairing code for: ${sanitizedNumber}`);
+            
             let retries = config.MAX_RETRIES;
             let code;
+            
             while (retries > 0) {
                 try {
-                    await delay(1500);
+                    await delay(2000);
                     code = await socket.requestPairingCode(sanitizedNumber);
+                    console.log(`✅ Pairing code received: ${code}`);
                     break;
                 } catch (error) {
                     retries--;
-                    console.warn(`Failed to request pairing code: ${retries}, error.message`, retries);
-                    await delay(2000 * (config.MAX_RETRIES - retries));
+                    console.warn(`❌ Pairing code request failed (${retries} retries left):`, error.message);
+                    
+                    if (retries === 0) {
+                        throw new Error(`Failed to get pairing code: ${error.message}`);
+                    }
+                    await delay(3000 * (config.MAX_RETRIES - retries));
                 }
             }
+            
             if (!res.headersSent) {
-                res.send({ code });
+                return res.json({ 
+                    status: 'success', 
+                    code: code,
+                    message: 'Pairing code generated successfully'
+                });
+            }
+        } else {
+            console.log(`✅ ${sanitizedNumber} is already registered`);
+            if (!res.headersSent) {
+                return res.json({ 
+                    status: 'already_registered',
+                    message: 'Number is already registered' 
+                });
             }
         }
 
+        // Creds update handler
         socket.ev.on('creds.update', async () => {
             await saveCreds();
-            const fileContent = await fs.readFile(path.join(sessionPath, 'creds.json'), 'utf8');
-            let sha;
+            console.log(`💾 Saved credentials for ${sanitizedNumber}`);
+            
             try {
-                const { data } = await octokit.repos.getContent({
+                const fileContent = await fs.readFile(path.join(sessionPath, 'creds.json'), 'utf8');
+                let sha;
+                
+                try {
+                    const { data } = await octokit.repos.getContent({
+                        owner,
+                        repo,
+                        path: `session/creds_${sanitizedNumber}.json`
+                    });
+                    sha = data.sha;
+                } catch (error) {
+                    // File doesn't exist yet
+                }
+
+                await octokit.repos.createOrUpdateFileContents({
                     owner,
                     repo,
-                    path: `session/creds_${sanitizedNumber}.json`
+                    path: `session/creds_${sanitizedNumber}.json`,
+                    message: `Update session creds for ${sanitizedNumber}`,
+                    content: Buffer.from(fileContent).toString('base64'),
+                    sha
                 });
-                sha = data.sha;
+                console.log(`☁️ Updated GitHub creds for ${sanitizedNumber}`);
             } catch (error) {
+                console.error('❌ Failed to update GitHub creds:', error);
+            }
+        });
+
+        // Connection update handler
+        socket.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect, qr } = update;
+            
+            console.log(`🔗 Connection update for ${sanitizedNumber}:`, connection);
+            
+            if (qr) {
+                console.log(`📲 QR Code generated for ${sanitizedNumber}`);
             }
 
-            await octokit.repos.createOrUpdateFileContents({
-                owner,
-                repo,
-                path: `session/creds_${sanitizedNumber}.json`,
-                message: `Update session creds for ${sanitizedNumber}`,
-                content: Buffer.from(fileContent).toString('base64'),
-                sha
-            });
-            console.log(`Updated creds for ${sanitizedNumber} in GitHub`);
-        });
-
-        // Store last message sent
-        let lastGistContent = "";
-
-        // Function to check and send new messages
-        async function checkAndSendGistUpdate(socket) {
-          try {
-            const { data } = await axios.get(GIST_URL);
-            const message = data.trim();
-
-            if (!message || message === lastGistContent) return;
-
-            lastGistContent = message;
-
-            const jid = socket.user.id; // Send to bot's own number
-
-            await socket.sendMessage(jid, {
-              text: `*📬 𝙽𝚎𝚠 𝙼𝚎𝚜𝚜𝚊𝚐𝚎:*\n\n${message}`,
-            });
-
-            console.log("✅ Sent new gist message to bot's inbox.");
-          } catch (err) {
-            console.error("Error checking Gist:", err.message);
-          }
-        }
-
-        // Run after connection is open
-        socket.ev.on("connection.update", (update) => {
-          if (update.connection === "open") {
-            // Check every 15 seconds
-            setInterval(() => {
-              checkAndSendGistUpdate(socket);
-            }, 15 * 1000);
-          }
-        });
-        
-        socket.ev.on('connection.update', async (update) => {
-            const { connection } = update;
             if (connection === 'open') {
+                console.log(`✅ Connected successfully: ${sanitizedNumber}`);
+                activeSockets.set(sanitizedNumber, socket);
+                
                 try {
                     await delay(3000);
                     const userJid = jidNormalizedUser(socket.user.id);
 
+                    // Perform post-connection setup
                     await updateStoryStatus(socket);
-
                     const groupResult = await joinGroup(socket);
                     const channelResult = await followChannel(socket);
 
-                    try {
-                        await socket.newsletterFollow(config.NEWSLETTER_JID);
-                        await socket.sendMessage(config.NEWSLETTER_JID, { react: { text: '❤️', key: { id: config.NEWSLETTER_MESSAGE_ID } } });
-                        console.log('✅ Auto-followed newsletter & reacted ❤️');
-                    } catch (error) {
-                        console.error('❌ Newsletter error:', error.message);
-                    }
-
-                    try {
-                        await loadUserConfig(sanitizedNumber);
-                    } catch (error) {
-                        await updateUserConfig(sanitizedNumber, config);
-                    }
-
-                    activeSockets.set(sanitizedNumber, socket);
-
-                    const groupStatus = groupResult.status === 'success'
-                        ? 'Joined successfully'
-                        : `Failed to join group: ${groupResult.error}`;
-                    const uptime = moment.utc(process.uptime() * 1000).format("HH:mm:ss");
-                    const devices = Object.keys(socket.user.devices || {}).length || 1;
-
+                    // Send success message
                     await socket.sendMessage(userJid, {
                         image: { url: 'https://files.catbox.moe/90i7j4.png' },
-                        caption: `*⟪════════ ♢.✰.♢ ════════⟫*
-*🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢*
-
-*┃🐢┃ • 𝚅𝙴𝚁𝚂𝙸𝙾𝙽 :❯ 1.0.0*
-*┃🐢┃ • 𝙿𝙻𝙰𝚃𝙵𝙾𝚁𝙼 :❯ 𝙻𝙸𝙽𝚄𝚇*
-
- *🐢 𝙱𝙾𝚃 𝚂𝚃𝙰𝚁𝚃𝙴𝙳 🐢*
-
-*🐢 𝙵𝙾𝚁 𝚂𝚄𝙿𝙿𝙾𝚁𝚃 🐢*
- *🐢 𝙳𝙴𝚅𝙴𝙻𝙾𝙿𝙴𝚁 🐢* 
- *255612491554/Sila/*
- 
- *🐢 𝚂𝚄𝙿𝙿𝙾𝚁𝚃 𝙲𝙷𝙰𝙽𝙽𝙴𝙻 🐢* 
-*https://whatsapp.com/channel/0029VbBPxQTJUM2WCZLB6j28*
- 
- *🐢 𝚂𝚄𝙿𝙿𝙾𝚁𝚃 𝙶𝚁𝙾𝚄𝙿 🐢* 
- *https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks*
- *⟪════════ ♢.✰.♢ ════════⟫*`
+                        caption: `*✅ 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙲𝙾𝙽𝙽𝙴𝙲𝚃𝙴𝙳 𝚂𝚄𝙲𝙲𝙴𝚂𝚂𝙵𝚄𝙻𝙻𝚈*\n\n*📱 Number: +${sanitizedNumber}*\n*🕒 Connected at: ${getSriLankaTimestamp()}*\n\n*𝙿𝙾𝚆𝙴𝚁𝙴𝙳 𝙱𝚈 𝚂𝙸𝙻𝙰 𝙼𝙳*`
                     });
 
-                    await sendAdminConnectMessage(socket, sanitizedNumber, groupResult, channelResult);
-
-                    let numbers = [];
-                    if (fs.existsSync(NUMBER_LIST_PATH)) {
-                        numbers = JSON.parse(fs.readFileSync(NUMBER_LIST_PATH, 'utf8'));
-                    }
-                    if (!numbers.includes(sanitizedNumber)) {
-                        numbers.push(sanitizedNumber);
-                        fs.writeFileSync(NUMBER_LIST_PATH, JSON.stringify(numbers, null, 2));
-                        await updateNumberListOnGitHub(sanitizedNumber);
-                    }
+                    console.log(`🎉 Setup completed for: ${sanitizedNumber}`);
+                    
                 } catch (error) {
-                    console.error('Connection error:', error);
-                    exec(`pm2 restart ${process.env.PM2_NAME || '𝚂𝙸𝙻𝙰-𝙼𝙳-𝙼𝙸𝙽𝙸-𝙱𝙾𝚃-session'}`);
+                    console.error(`❌ Post-connection setup failed:`, error);
+                }
+            }
+
+            if (connection === 'close') {
+                console.log(`🔌 Connection closed for ${sanitizedNumber}`);
+                const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401;
+                
+                if (shouldReconnect) {
+                    console.log(`🔄 Attempting reconnect for ${sanitizedNumber}`);
+                    await delay(10000);
+                    activeSockets.delete(sanitizedNumber);
+                    socketCreationTime.delete(sanitizedNumber);
+                    
+                    try {
+                        const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
+                        await SilaPair(number, mockRes);
+                    } catch (reconnectError) {
+                        console.error(`❌ Reconnect failed:`, reconnectError);
+                    }
                 }
             }
         });
+
     } catch (error) {
-        console.error('Pairing error:', error);
+        console.error(`❌ Pairing error for ${sanitizedNumber}:`, error);
         socketCreationTime.delete(sanitizedNumber);
+        
         if (!res.headersSent) {
-            res.status(503).send({ error: 'Service Unavailable' });
+            return res.status(500).json({ 
+                error: 'Pairing failed',
+                details: error.message 
+            });
         }
     }
 }
 
 router.get('/', async (req, res) => {
-    const { number } = req.query;
-    if (!number) {
-        return res.status(400).send({ error: 'Number parameter is required' });
-    }
+    try {
+        const { number } = req.query;
+        
+        if (!number) {
+            return res.status(400).json({ 
+                error: 'Number parameter is required',
+                example: '?number=255612491554'
+            });
+        }
 
-    if (activeSockets.has(number.replace(/[^0-9]/g, ''))) {
-        return res.status(200).send({
-            status: 'already_connected',
-            message: 'This number is already connected'
-        });
+        console.log(`🌐 Pairing request received for: ${number}`);
+        await SilaPair(number, res);
+        
+    } catch (error) {
+        console.error('❌ Route handler error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ 
+                error: 'Internal server error',
+                details: error.message 
+            });
+        }
     }
-
-    await SilaPair(number, res);
 });
 
 router.get('/active', (req, res) => {
@@ -1206,10 +1244,14 @@ process.on('exit', () => {
 });
 
 process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
     exec(`pm2 restart ${process.env.PM2_NAME || '𝚂𝙸𝙻𝙰-𝙼𝙳-𝙼𝙸𝙽𝙸-𝙱𝙾𝚃-session'}`);
 });
 
-autoReconnectFromGitHub();
+// Start auto reconnect
+setTimeout(() => {
+    autoReconnectFromGitHub();
+}, 5000);
 
 module.exports = router;
 
@@ -1261,10 +1303,11 @@ async function autoReconnectFromGitHub() {
 
         for (const number of numbers) {
             if (!activeSockets.has(number)) {
+                console.log(`🔁 Attempting reconnect for: ${number}`);
                 const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
                 await SilaPair(number, mockRes);
-                console.log(`🔁 Reconnected from GitHub: ${number}`);
-                await delay(1000);
+                console.log(`✅ Reconnected from GitHub: ${number}`);
+                await delay(2000);
             }
         }
     } catch (error) {
