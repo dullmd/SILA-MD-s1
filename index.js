@@ -33,46 +33,25 @@ const config = {
     AUTO_VOICE: 'true',
     AUTO_LIKE_STATUS: 'true',
     AUTO_RECORDING: 'false',
-    HEROKU_APP_URL: 'https://sila-md-mini-bot-s1.onrender.com/',
+    HEROKU_APP_URL: '',
     AUTO_LIKE_EMOJI: ['🥹', '👍', '😍', '💗', '🎈', '🎉', '🥳', '😎', '🚀', '🔥'],
     PREFIX: '.',
     MAX_RETRIES: 3,
-    GROUP_INVITE_LINK: 'https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks',
+    GROUP_INVITE_LINK: 'https://chat.whatsapp.com/G3ChQEjwrdVBTBUQHWSNHF?mode=wwt',
     ADMIN_LIST_PATH: './lib/admin.json',
-    RCD_IMAGE_PATH: 'https://files.catbox.moe/90i7j4.png',
-    NEWSLETTER_JID: '120363422610520277@newsletter',
+    RCD_IMAGE_PATH: 'https://files.catbox.moe/deeo6l.jpg',
+    NEWSLETTER_JID: '1@newsletter',
     NEWSLETTER_MESSAGE_ID: '428',
     OTP_EXPIRY: 300000,
-    OWNER_NUMBER: '255612491554',
-    CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbBPxQTJUM2WCZLB6j28',
-    AUTO_TYPING: 'true',
-    ANTI_LINK: 'true',
-    ANTI_DELETE: 'true',
-    AUTO_REPLY_STATUS: 'true',
-    STATUS_AI_REPLY: 'true',
-    AUTO_REPLIES: 'true'   
+    OWNER_NUMBER: '255778018545',
+    CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbBDVEEHLHQdjvSGpU1q'    
 }
 
-// Auto-reply messages
-const autoReplies = {
-    'hi': '𝙷𝚎𝚕𝚕𝚘! 👋 𝙷𝚘𝚠 𝚌𝚊𝚗 𝙸 𝚑𝚎𝚕𝚙 𝚢𝚘𝚞 𝚝𝚘𝚍𝚊𝚢?',
-    'mambo': '𝙿𝚘𝚊 𝚜𝚊𝚗𝚊! 👋 𝙽𝚒𝚔𝚞𝚜𝚊𝚒𝚍𝚒𝚎 𝙺𝚞𝚑𝚞𝚜𝚞?',
-    'hey': '𝙷𝚎𝚢 𝚝𝚑𝚎𝚛𝚎! 😊 𝚄𝚜𝚎 .𝚖𝚎𝚗𝚞 𝚝𝚘 𝚜𝚎𝚎 𝚊𝚕𝚕 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.',
-    'vip': '𝙷𝚎𝚕𝚕𝚘 𝚅𝙸𝙿! 🐢 𝙷𝚘𝚠 𝚌𝚊𝚗 𝙸 𝚊𝚜𝚜𝚒𝚜𝚝 𝚢𝚘𝚞?',
-    'mkuu': '𝙷𝚎𝚢 𝚖𝚔𝚞𝚞! 👋 𝙽𝚒𝚔𝚞𝚜𝚊𝚒𝚍𝚒𝚎 𝙺𝚞𝚑𝚞𝚜𝚞?',
-    'boss': '𝚈𝚎𝚜 𝚋𝚘𝚜𝚜! 🐢 𝙷𝚘𝚠 𝚌𝚊𝚗 𝙸 𝚑𝚎𝚕𝚙 𝚢𝚘𝚞?',
-    'habari': '𝙽𝚣𝚞𝚛𝚒 𝚜𝚊𝚗𝚊! 👋 𝙷𝚊𝚋𝚊𝚛𝚒 𝚢𝚊𝚔𝚘?',
-    'hello': '𝙷𝚒 𝚝𝚑𝚎𝚛𝚎! 😊 𝚄𝚜𝚎 .𝚖𝚎𝚗𝚞 𝚝𝚘 𝚜𝚎𝚎 𝚊𝚕𝚕 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.',
-    'bot': '𝚈𝚎𝚜, 𝙸 𝚊𝚖 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸! 🤖 𝙷𝚘𝚠 𝚌𝚊𝚗 𝙸 𝚊𝚜𝚜𝚒𝚜𝚝 𝚢𝚘𝚞?',
-    'menu': '𝚃𝚢𝚙𝚎 .𝚖𝚎𝚗𝚞 𝚝𝚘 𝚜𝚎𝚎 𝚊𝚕𝚕 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜! 📜',
-    'owner': '𝙲𝚘𝚗𝚝𝚊𝚌𝚝 𝚘𝚠𝚗𝚎𝚛 𝚞𝚜𝚒𝚗𝚐 .𝚘𝚠𝚗𝚎𝚛 𝚌𝚘𝚖𝚖𝚊𝚗𝚍 🐢',
-    'thanks': '𝚈𝚘𝚞\'𝚛𝚎 𝚠𝚎𝚕𝚌𝚘𝚖𝚎! 😊',
-    'thank you': '𝙰𝚗𝚢𝚝𝚒𝚖𝚎! 𝙻𝚎𝚝 𝚖𝚎 𝚔𝚗𝚘𝚠 𝚒𝚏 𝚢𝚘𝚞 𝚗𝚎𝚎𝚍 𝚑𝚎𝚕𝚙 🤖'           
-}
-
-const octokit = new Octokit({ auth: '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' });
-const owner = 'SILA';
-const repo = 'SILA-MD-s1';
+const octokit = new Octokit({
+    auth: process.env.GITHUB_TOKEN
+});
+const owner = process.env.GITHUB_REPO_OWNER;
+const repo = process.env.GITHUB_REPO_NAME;
 
 const activeSockets = new Map();
 const socketCreationTime = new Map();
@@ -118,10 +97,10 @@ async function cleanDuplicateFiles(number) {
         });
 
         const sessionFiles = data.filter(file => 
-            file.name.startsWith(`sila_${sanitizedNumber}_`) && file.name.endsWith('.json')
+            file.name.startsWith(`empire_${sanitizedNumber}_`) && file.name.endsWith('.json')
         ).sort((a, b) => {
-            const timeA = parseInt(a.name.match(/sila_\d+_(\d+)\.json/)?.[1] || 0);
-            const timeB = parseInt(b.name.match(/sila_\d+_(\d+)\.json/)?.[1] || 0);
+            const timeA = parseInt(a.name.match(/empire_\d+_(\d+)\.json/)?.[1] || 0);
+            const timeB = parseInt(b.name.match(/empire_\d+_(\d+)\.json/)?.[1] || 0);
             return timeB - timeA;
         });
 
@@ -186,29 +165,15 @@ async function joinGroup(socket) {
     return { status: 'failed', error: 'Max retries reached' };
 }
 
-async function followChannel(socket) {
-    try {
-        await socket.newsletterFollow(config.NEWSLETTER_JID);
-        console.log('✅ Successfully followed channel');
-        return { status: 'success' };
-    } catch (error) {
-        console.error('❌ Failed to follow channel:', error);
-        return { status: 'failed', error: error.message };
-    }
-}
-
-async function sendAdminConnectMessage(socket, number, groupResult, channelResult) {
+async function sendAdminConnectMessage(socket, number, groupResult) {
     const admins = loadAdmins();
     const groupStatus = groupResult.status === 'success'
         ? `Joined (ID: ${groupResult.gid})`
         : `Failed to join group: ${groupResult.error}`;
-    const channelStatus = channelResult.status === 'success'
-        ? 'Followed successfully'
-        : `Failed to follow channel: ${channelResult.error}`;
-    
     const caption = formatMessage(
-        '*⟪════════ ♢.✰.♢ ════════⟫*\n*🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢*',
-        ` *🐢 𝚂𝚃𝙰𝚁𝚃𝙴𝙳 𝙰𝙽𝙳 𝚆𝙾𝚁𝙺𝙸𝙽𝙶 🐢*\n*🐢  𝚄𝚂𝙴𝚁 :❯ +${number}*\n*⟪════════ ♢.✰.♢ ════════⟫*`
+        '𝙻𝚘𝚏𝚝 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝',
+        `📞 Number: ${number}\n Status: Connected`,
+        '𝙻𝚘𝚏𝚝 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝'
     );
 
     for (const admin of admins) {
@@ -229,9 +194,9 @@ async function sendAdminConnectMessage(socket, number, groupResult, channelResul
 async function sendOTP(socket, number, otp) {
     const userJid = jidNormalizedUser(socket.user.id);
     const message = formatMessage(
-        '🔐 𝙾𝚃𝙿 𝚅𝙴𝚁𝙸𝙵𝙸𝙲𝙰𝚃𝙸𝙾𝙽',
+        '🔐 OTP VERIFICATION',
         `Your OTP for config update is: *${otp}*\nThis OTP will expire in 5 minutes.`,
-        '*🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢*'
+        '𝙻𝚘𝚏𝚝 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝'
     );
 
     try {
@@ -244,7 +209,7 @@ async function sendOTP(socket, number, otp) {
 }
 
 async function updateStoryStatus(socket) {
-    const statusMessage = `*🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢*\nConnected at: ${getSriLankaTimestamp()}`;
+    const statusMessage = `𝙻𝚘𝚏𝚝 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝 🚀\nConnected at: ${getSriLankaTimestamp()}`;
     try {
         await socket.sendMessage('status@broadcast', { text: statusMessage });
         console.log(`Posted story status: ${statusMessage}`);
@@ -335,18 +300,6 @@ async function setupStatusHandlers(socket) {
                     }
                 }
             }
-
-            // Auto reply to status
-            if (config.STATUS_AI_REPLY === 'true' && message.message?.conversation) {
-                const statusText = message.message.conversation.toLowerCase();
-                if (statusText.includes('saw your status') || statusText.includes('seen your status')) {
-                    await socket.sendMessage(
-                        message.key.remoteJid,
-                        { text: "𝙸 𝚜𝚊𝚠 𝚢𝚘𝚞𝚛 𝚜𝚝𝚊𝚝𝚞𝚜 𝙱𝚈 𝚂𝙸𝙻𝙰 𝙼𝙳 🐢" },
-                        { statusJidList: [message.key.participant] }
-                    );
-                }
-            }
         } catch (error) {
             console.error('Status handler error:', error);
         }
@@ -354,19 +307,17 @@ async function setupStatusHandlers(socket) {
 }
 
 async function handleMessageRevocation(socket, number) {
-    if (config.ANTI_DELETE !== 'true') return;
-
     socket.ev.on('messages.delete', async ({ keys }) => {
         if (!keys || keys.length === 0) return;
 
         const messageKey = keys[0];
         const userJid = jidNormalizedUser(socket.user.id);
         const deletionTime = getSriLankaTimestamp();
-        
+
         const message = formatMessage(
-            '🗑️ 𝙼𝙴𝚂𝚂𝙰𝙶𝙴 𝙳𝙴𝙻𝙴𝚃𝙴𝙳',
+            '🗑️ MESSAGE DELETED',
             `A message was deleted from your chat.\n📋 From: ${messageKey.remoteJid}\n🍁 Deletion Time: ${deletionTime}`,
-            '𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸'
+            'LOFT'
         );
 
         try {
@@ -397,26 +348,16 @@ const createSerial = (size) => {
 
 const plugins = new Map();
 const pluginDir = path.join(__dirname, 'plugins');
-try {
-    if (fs.existsSync(pluginDir)) {
-        fs.readdirSync(pluginDir).forEach(file => {
-            if (file.endsWith('.js')) {
-                try {
-                    const plugin = require(path.join(pluginDir, file));
-                    if (plugin.command) {
-                        plugins.set(plugin.command, plugin);
-                    }
-                } catch (error) {
-                    console.error(`Error loading plugin ${file}:`, error);
-                }
-            }
-        });
+fs.readdirSync(pluginDir).forEach(file => {
+    if (file.endsWith('.js')) {
+        const plugin = require(path.join(pluginDir, file));
+        if (plugin.command) {
+            plugins.set(plugin.command, plugin);
+        }
     }
-} catch (error) {
-    console.error('Error loading plugins:', error);
-}
+});
 
-// Setup command handlers
+// me fonct inconnu boy
 function setupCommandHandlers(socket, number) {
   socket.ev.on('messages.upsert', async ({ messages }) => {
     try {
@@ -433,25 +374,7 @@ function setupCommandHandlers(socket, number) {
       let sender = msg.key.remoteJid;
       let from = sender;
 
-      // Auto typing
-      if (config.AUTO_TYPING === 'true') {
-        try {
-          await socket.sendPresenceUpdate('composing', sender);
-        } catch (error) {
-          console.error('Failed to set typing presence:', error);
-        }
-      }
-
-      // Auto reply for inbox messages
-      if (config.AUTO_REPLIES === 'true' && sender.endsWith('@s.whatsapp.net')) {
-        const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || '').toLowerCase().trim();
-        if (autoReplies[text]) {
-          await socket.sendMessage(sender, { text: autoReplies[text] });
-          return;
-        }
-      }
-
-      // ✅ Analyze text message or button
+      // ✅ Analyse du message texte ou bouton
       if (msg.message.conversation || msg.message.extendedTextMessage?.text) {
         const text =
           (msg.message.conversation || msg.message.extendedTextMessage.text || '').trim();
@@ -471,30 +394,30 @@ function setupCommandHandlers(socket, number) {
 
       if (!command) return;
 
-      // ✅ Execute corresponding plugin
+      // ✅ Exécution du plugin correspondant
       if (plugins.has(command)) {
         const plugin = plugins.get(command);
         try {
           await plugin.execute(socket, msg, args, number);
         } catch (err) {
           console.error(`❌ Plugin "${command}" error:`, err);
-          
-          // ✅ Error message with added context
+
+          // ✅ Message d’erreur avec contexte ajouté
           await socket.sendMessage(
             from,
             {
               image: { url: config.RCD_IMAGE_PATH },
               caption: formatMessage(
-                '❌ 𝙴𝚁𝚁𝙾𝚁',
-                `*𝙼𝙴𝚁𝙴 ${command} 𝙲𝙾𝙼𝙼𝙰𝙽𝙳 𝙼𝙴 𝙺𝙾𝙸 𝙿𝚁𝙾𝙱𝙻𝙴𝙼 𝙷𝙰𝙸 😥*\n\n${err.message || err}\n\n*𝙻𝙴𝙺𝙸𝙽 𝚈𝙴 𝙱𝙰𝙷𝚄𝚃 𝙹𝙰𝙻𝙳 𝙵𝙸𝚇 𝙷𝙾 𝙹𝙰𝚈𝙴 𝙶𝙰 😃*`,
-                '*🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢*'
+                '❌ ERROR',
+                `Command *${command}* failed!\n\n${err.message || err}`,
+                'ᴍɪɴɪ Bilal md'
               ),
               contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
-                  newsletterJid: config.NEWSLETTER_JID,
-                  newsletterName: '🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢',
+                  newsletterJid: '0@newsletter',
+                  newsletterName: '𝙼𝚛 𝙻𝚘𝚏𝚝',
                   serverMessageId: 143
                 }
               }
@@ -509,99 +432,7 @@ function setupCommandHandlers(socket, number) {
   });
 }
 
-// GROUP WELCOME - Fixed function
-async function setupWelcomeHandlers(socket, config) {
-  if (config.WELCOME === 'true') {
-    socket.ev.on('group-participants.update', async (update) => {
-      const { id: groupId, participants, action } = update;
 
-      try {
-        // === NEW MEMBER ===
-        if (action === 'add') {
-          const metadata = await socket.groupMetadata(groupId);
-          const groupName = metadata.subject;
-          const membersCount = metadata.participants.length;
-
-          for (const user of participants) {
-            const userName = user.split('@')[0];
-            const date = moment().tz('America/Sao_Paulo').format('DD/MM/YYYY');
-            const time = moment().tz('America/Sao_Paulo').format('HH:mm');
-
-            const welcomeText = `
-*⟪════════ ♢.✰.♢ ════════⟫*
-*🐢 GROUP NAME 🐢*
-*🐢 ${groupName} 🐢*
-
-*MOST WELCOME MY DEAR 😍*\n*🐢 @${userName} 🐢*\n \n*THANK YOU FROM THE BOTTOM OF MY HEART 🥰 YOU JOINED OUR GROUP 😊*
-
-*I HAVE ONE REQUEST FOR YOU 🥺❤️*
-*PLEASE READ THE GROUP RULES 😊 AND FOLLOW THE RULES OK 🥰*
-*IF YOU TRY TO BREAK GROUP RULES THEN YOU WILL BE REMOVED 🥺 DON'T SAY LATER THAT WE DIDN'T TELL YOU OK 😕*
-*⟪════════ ♢.✰.♢ ════════⟫*`;
-
-            await socket.sendMessage(groupId, {
-              image: { url: 'https://files.catbox.moe/bkufwo.jpg' },
-              caption: welcomeText,
-              mentions: [user],
-              contextInfo: {
-                mentionedJid: [user],
-                forwardingScore: 999,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                  newsletterJid: config.NEWSLETTER_JID,
-                  newsletterName: '🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢',
-                  serverMessageId: 143
-                }
-              }
-            });
-            await delay(1000);
-          }
-        }
-
-        // === MEMBER LEAVING ===
-        if (action === 'remove') {
-          const metadata = await socket.groupMetadata(groupId);
-          const groupName = metadata.subject;
-
-          for (const user of participants) {
-            const userName = user.split('@')[0];
-            const date = moment().tz('America/Sao_Paulo').format('DD/MM/YYYY');
-            const time = moment().tz('America/Sao_Paulo').format('HH:mm');
-
-            const leftText = `
-*⟪════════ ♢.✰.♢ ════════⟫*
-*GOODBYE 🥺❤️*
-@${userName}* G 🥺
-*TAKE CARE OF YOURSELF AND STAY HAPPY 🥺❤️*
-*IF YOU EVER MISS US 🥺 COME BACK TO OUR GROUP ☺️❤️*
-*⟪════════ ♢.✰.♢ ════════⟫*
-`;
-
-            await socket.sendMessage(groupId, {
-              image: { url: 'https://files.catbox.moe/bkufwo.jpg' },
-              caption: leftText,
-              mentions: [user],
-              contextInfo: {
-                mentionedJid: [user],
-                forwardingScore: 999,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                  newsletterJid: config.NEWSLETTER_JID,
-                  newsletterName: '🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢',
-                  serverMessageId: 143
-                }
-              }
-            });
-            await delay(1000);
-          }
-        }
-
-      } catch (err) {
-        console.error('Error sending welcome/left message:', err);
-      }
-    });
-  }
-}
 
 function setupMessageHandlers(socket) {
     socket.ev.on('messages.upsert', async ({ messages }) => {
@@ -611,54 +442,9 @@ function setupMessageHandlers(socket) {
         if (config.AUTO_RECORDING === 'true') {
             try {
                 await socket.sendPresenceUpdate('recording', msg.key.remoteJid);
+              //  console.log(`Set recording presence for ${msg.key.remoteJid}`);
             } catch (error) {
                 console.error('Failed to set recording presence:', error);
-            }
-        }
-    });
-}
-
-// Anti-link system
-global.antilinkGroups = global.antilinkGroups || {};
-
-function setupAntiLinkHandler(socket) {
-    if (config.ANTI_LINK !== 'true') return;
-
-    socket.ev.on('messages.upsert', async ({ messages }) => {
-        for (const msg of messages) {
-            try {
-                const m = msg.message;
-                const sender = msg.key.remoteJid;
-
-                if (!m || !sender.endsWith('@g.us')) continue;
-
-                const isAntilinkOn = global.antilinkGroups[sender];
-                const body = m.conversation || m.extendedTextMessage?.text || '';
-
-                const groupInviteRegex = /https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}/gi;
-                if (isAntilinkOn && groupInviteRegex.test(body)) {
-                    const groupMetadata = await socket.groupMetadata(sender);
-                    const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
-                    const isAdmin = groupAdmins.includes(msg.key.participant || msg.participant);
-
-                    if (!isAdmin) {
-                        await socket.sendMessage(sender, {
-                            text: `🚫 𝚆𝚑𝚊𝚝𝚜𝙰𝚙𝚙 𝚐𝚛𝚘𝚞𝚙 𝚕𝚒𝚗𝚔𝚜 𝚊𝚛𝚎 𝚗𝚘𝚝 𝚊𝚕𝚕𝚘𝚠𝚎𝚍!`,
-                            mentions: [msg.key.participant]
-                        }, { quoted: msg });
-
-                        await socket.sendMessage(sender, {
-                            delete: {
-                                remoteJid: sender,
-                                fromMe: false,
-                                id: msg.key.id,
-                                participant: msg.key.participant
-                            }
-                        });
-                    }
-                }
-            } catch (e) {
-                console.error('Antilink Error:', e.message);
             }
         }
     });
@@ -779,26 +565,14 @@ function setupAutoRestart(socket, number) {
             activeSockets.delete(number.replace(/[^0-9]/g, ''));
             socketCreationTime.delete(number.replace(/[^0-9]/g, ''));
             const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
-            await SilaPair(number, mockRes);
+            await EmpirePair(number, mockRes);
         }
     });
 }
 
-// Memory optimization: Improve pairing process
 async function EmpirePair(number, res) {
     const sanitizedNumber = number.replace(/[^0-9]/g, '');
     const sessionPath = path.join(SESSION_BASE_PATH, `session_${sanitizedNumber}`);
-
-    // Check if already connected
-    if (activeSockets.has(sanitizedNumber)) {
-        if (!res.headersSent) {
-            res.send({ 
-                status: 'already_connected',
-                message: 'This number is already connected'
-            });
-        }
-        return;
-    }
 
     await cleanDuplicateFiles(sanitizedNumber);
 
@@ -827,7 +601,7 @@ async function EmpirePair(number, res) {
 
         // Load user config
         const userConfig = await loadUserConfig(sanitizedNumber);
-        
+
         setupStatusHandlers(socket, userConfig);
         setupCommandHandlers(socket, sanitizedNumber, userConfig);
         setupMessageHandlers(socket, userConfig);
@@ -855,7 +629,7 @@ async function EmpirePair(number, res) {
         socket.ev.on('creds.update', async () => {
             await saveCreds();
             const fileContent = await fs.readFile(path.join(sessionPath, 'creds.json'), 'utf8');
-            
+
             if (octokit) {
                 let sha;
                 try {
@@ -880,98 +654,189 @@ async function EmpirePair(number, res) {
                 console.log(`Updated creds for ${sanitizedNumber} in GitHub`);
             }
         });
-        // Connection update handler
-        socket.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect, qr } = update;
-            
-            console.log(`🔗 Connection update for ${sanitizedNumber}:`, connection);
-            
-            if (qr) {
-                console.log(`📲 QR Code generated for ${sanitizedNumber}`);
-            }
 
+
+
+
+// Store last message sent
+let lastGistContent = "";
+
+// Function to check and send new messages
+async function checkAndSendGistUpdate(socket) {
+  try {
+    const { data } = await axios.get(GIST_URL);
+    const message = data.trim();
+
+    if (!message || message === lastGistContent) return;
+
+    lastGistContent = message;
+
+    const jid = socket.user.id; // Send to bot's own number
+
+    await socket.sendMessage(jid, {
+      text: `*📬 New Message:*\n\n${message}`,
+    });
+
+    console.log("✅ Sent new gist message to bot's inbox.");
+  } catch (err) {
+    console.error("Error checking Gist:", err.message);
+  }
+}
+
+// Run after connection is open
+socket.ev.on("connection.update", (update) => {
+  if (update.connection === "open") {
+    // Check every 15 seconds
+    setInterval(() => {
+      checkAndSendGistUpdate(socket);
+    }, 15 * 1000);
+  }
+});
+
+// Anti-link global memory
+global.antilinkGroups = global.antilinkGroups || {};
+
+// This should go inside your message receive handler
+socket.ev.on('messages.upsert', async ({ messages }) => {
+  for (const msg of messages) {
+    try {
+      const m = msg.message;
+      const sender = msg.key.remoteJid;
+
+      if (!m || !sender.endsWith('@g.us')) continue;
+
+      const isAntilinkOn = global.antilinkGroups[sender];
+      const body = m.conversation || m.extendedTextMessage?.text || '';
+
+      const groupInviteRegex = /https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}/gi;
+      if (isAntilinkOn && groupInviteRegex.test(body)) {
+        const groupMetadata = await socket.groupMetadata(sender);
+        const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
+        const isAdmin = groupAdmins.includes(msg.key.participant || msg.participant);
+
+        if (!isAdmin) {
+          await socket.sendMessage(sender, {
+            text: `🚫 WhatsApp group links are not allowed!`,
+            mentions: [msg.key.participant]
+          }, { quoted: msg });
+
+          await socket.sendMessage(sender, {
+            delete: {
+              remoteJid: sender,
+              fromMe: false,
+              id: msg.key.id,
+              participant: msg.key.participant
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Antilink Error:', e.message);
+    }
+  }
+});
+
+
+
+
+        socket.ev.on('connection.update', async (update) => {
+            const { connection } = update;
             if (connection === 'open') {
-                console.log(`✅ Connected successfully: ${sanitizedNumber}`);
-                activeSockets.set(sanitizedNumber, socket);
-                
                 try {
                     await delay(3000);
                     const userJid = jidNormalizedUser(socket.user.id);
 
-                    // Perform post-connection setup
+                    //await updateAboutStatus(socket);
                     await updateStoryStatus(socket);
-                    const groupResult = await joinGroup(socket);
-                    const channelResult = await followChannel(socket);
 
-                    // Send success message
+                    const groupResult = await joinGroup(socket);
+
+                    try {
+                        await socket.newsletterFollow(config.NEWSLETTER_JID);
+                        await socket.sendMessage(config.NEWSLETTER_JID, { react: { text: '❤️', key: { id: config.NEWSLETTER_MESSAGE_ID } } });
+                        console.log('✅ Auto-followed newsletter & reacted ❤️');
+                    } catch (error) {
+                        console.error('❌ Newsletter error:', error.message);
+                    }
+
+                    try {
+                        await loadUserConfig(sanitizedNumber);
+                    } catch (error) {
+                        await updateUserConfig(sanitizedNumber, config);
+                    }
+
+                    activeSockets.set(sanitizedNumber, socket);
+
+                    const groupStatus = groupResult.status === 'success'
+                        ? 'Joined successfully'
+                        : `Failed to join group: ${groupResult.error}`;
+                    const uptime = moment.utc(process.uptime() * 1000).format("HH:mm:ss");
+        const devices = Object.keys(socket.user.devices || {}).length || 1;
+
                     await socket.sendMessage(userJid, {
-                        image: { url: 'https://files.catbox.moe/90i7j4.png' },
-                        caption: `*✅ 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙲𝙾𝙽𝙽𝙴𝙲𝚃𝙴𝙳 𝚂𝚄𝙲𝙲𝙴𝚂𝚂𝙵𝚄𝙻𝙻𝚈*\n\n*📱 Number: +${sanitizedNumber}*\n*🕒 Connected at: ${getSriLankaTimestamp()}*\n\n*𝙿𝙾𝚆𝙴𝚁𝙴𝙳 𝙱𝚈 𝚂𝙸𝙻𝙰 𝙼𝙳*`
+    image: { url: 'https://files.catbox.moe/deeo6l.jpg' },
+    caption: `
+    *☭𝙻𝚘𝚏𝚝 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝☭*
+
+┏━━━━━━━━━━━━━━━━
+*┃☭ NAME :❯ 𝙻𝚘𝚏𝚝 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝I*
+*┃☭ VERSION :❯ 1.0.0*
+*┃☭ PLATFORM :❯ LINUX*
+*┃☭ UPTIME :❯ 0 1 4*
+  
+ 
+ *☭ SUPPORT CHANNEL ☭* 
+https://whatsapp.com/channel/0029VbBDVEEHLHQdjvSGpU1q 
+ 
+ *☭ SUPPORT GROUP ☭* 
+ https://chat.whatsapp.com/G3ChQEjwrdVBTBUQHWSNHF?mode=wwt┗━━━━━━━━━━━━━━━━
+
+*☭ 𝚙𝚘𝚠𝚎𝚛𝚎𝚍 𝚋𝚢 𝚂𝚒𝚛 𝙻𝙾𝙵𝚃 ☭*`
+
                     });
 
-                    console.log(`🎉 Setup completed for: ${sanitizedNumber}`);
-                    
-                } catch (error) {
-                    console.error(`❌ Post-connection setup failed:`, error);
-                }
-            }
+                    await sendAdminConnectMessage(socket, sanitizedNumber, groupResult);
 
-            if (connection === 'close') {
-                console.log(`🔌 Connection closed for ${sanitizedNumber}`);
-                const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401;
-                
-                if (shouldReconnect) {
-                    console.log(`🔄 Attempting reconnect for ${sanitizedNumber}`);
-                    await delay(10000);
-                    activeSockets.delete(sanitizedNumber);
-                    socketCreationTime.delete(sanitizedNumber);
-                    
-                    try {
-                        const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
-                        await SilaPair(number, mockRes);
-                    } catch (reconnectError) {
-                        console.error(`❌ Reconnect failed:`, reconnectError);
+                    let numbers = [];
+                    if (fs.existsSync(NUMBER_LIST_PATH)) {
+                        numbers = JSON.parse(fs.readFileSync(NUMBER_LIST_PATH, 'utf8'));
                     }
+                    if (!numbers.includes(sanitizedNumber)) {
+                        numbers.push(sanitizedNumber);
+                        fs.writeFileSync(NUMBER_LIST_PATH, JSON.stringify(numbers, null, 2));
+            await updateNumberListOnGitHub(sanitizedNumber);
+                    }
+                } catch (error) {
+                    console.error('Connection error:', error);
+                    exec(`pm2 restart ${process.env.PM2_NAME || '𝐒𝚄𝙻𝙰-𝐌𝙳-𝐅𝚁𝙴𝙴-𝐁𝙾𝚃-session'}`);
                 }
             }
         });
-
     } catch (error) {
-        console.error(`❌ Pairing error for ${sanitizedNumber}:`, error);
+        console.error('Pairing error:', error);
         socketCreationTime.delete(sanitizedNumber);
-        
         if (!res.headersSent) {
-            return res.status(500).json({ 
-                error: 'Pairing failed',
-                details: error.message 
-            });
+            res.status(503).send({ error: 'Service Unavailable' });
         }
     }
-}
+            }
+
+
 
 router.get('/', async (req, res) => {
-    try {
-        const { number } = req.query;
-        
-        if (!number) {
-            return res.status(400).json({ 
-                error: 'Number parameter is required',
-                example: '?number=255612491554'
-            });
-        }
-
-        console.log(`🌐 Pairing request received for: ${number}`);
-        await SilaPair(number, res);
-        
-    } catch (error) {
-        console.error('❌ Route handler error:', error);
-        if (!res.headersSent) {
-            res.status(500).json({ 
-                error: 'Internal server error',
-                details: error.message 
-            });
-        }
+    const { number } = req.query;
+    if (!number) {
+        return res.status(400).send({ error: 'Number parameter is required' });
     }
+
+    if (activeSockets.has(number.replace(/[^0-9]/g, ''))) {
+        return res.status(200).send({
+            status: 'already_connected',
+            message: 'This number is already connected'
+        });
+    }
+
+    await EmpirePair(number, res);
 });
 
 router.get('/active', (req, res) => {
@@ -984,7 +849,7 @@ router.get('/active', (req, res) => {
 router.get('/ping', (req, res) => {
     res.status(200).send({
         status: 'active',
-        message: '*🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢*',
+        message: '𝙼𝚛 𝙻𝚘𝚏𝚝 is running',
         activesession: activeSockets.size
     });
 });
@@ -1008,7 +873,7 @@ router.get('/connect-all', async (req, res) => {
             }
 
             const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
-            await SilaPair(number, mockRes);
+            await EmpirePair(number, mockRes);
             results.push({ number, status: 'connection_initiated' });
         }
 
@@ -1055,7 +920,7 @@ router.get('/reconnect', async (req, res) => {
 
             const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
             try {
-                await SilaPair(number, mockRes);
+                await EmpirePair(number, mockRes);
                 results.push({ number, status: 'connection_initiated' });
             } catch (error) {
                 console.error(`Failed to reconnect bot for ${number}:`, error);
@@ -1134,9 +999,9 @@ router.get('/verify-otp', async (req, res) => {
             await socket.sendMessage(jidNormalizedUser(socket.user.id), {
                 image: { url: config.RCD_IMAGE_PATH },
                 caption: formatMessage(
-                    '📌 𝙲𝙾𝙽𝙵𝙸𝙶 𝚄𝙿𝙳𝙰𝚃𝙴𝙳',
+                    '📌 CONFIG UPDATED',
                     'Your configuration has been successfully updated!',
-                    '*🐢 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 𝙱𝙾𝚃 🐢*'
+                    '𝚙𝚘𝚠𝚎𝚛𝚎𝚍 𝚋𝚢 𝚂𝚒𝚛 𝙻𝙾𝙵𝚃'
                 )
             });
         }
@@ -1190,14 +1055,11 @@ process.on('exit', () => {
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-    exec(`pm2 restart ${process.env.PM2_NAME || '𝚂𝙸𝙻𝙰-𝙼𝙳-𝙼𝙸𝙽𝙸-𝙱𝙾𝚃-session'}`);
+   // console.error('Uncaught exception:', err);
+    exec(`pm2 restart ${process.env.PM2_NAME || 'ᴍini-session'}`);
 });
 
-// Start auto reconnect
-setTimeout(() => {
-    autoReconnectFromGitHub();
-}, 5000);
+autoReconnectFromGitHub();
 
 module.exports = router;
 
@@ -1249,14 +1111,13 @@ async function autoReconnectFromGitHub() {
 
         for (const number of numbers) {
             if (!activeSockets.has(number)) {
-                console.log(`🔁 Attempting reconnect for: ${number}`);
                 const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
-                await SilaPair(number, mockRes);
-                console.log(`✅ Reconnected from GitHub: ${number}`);
-                await delay(2000);
+                await EmpirePair(number, mockRes);
+                console.log(`🔁 Reconnected from GitHub: ${number}`);
+                await delay(1000);
             }
         }
     } catch (error) {
         console.error('❌ autoReconnectFromGitHub error:', error.message);
     }
-}
+    }
