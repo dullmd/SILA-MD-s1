@@ -112,7 +112,7 @@ module.exports = {
                 mimetype: "video/mp4",
                 jpegThumbnail: await getThumbnailBuffer(data.thumbnail),
                 fileName: `${data.title}.mp4`,
-                caption: `${data.title}\n\n> MINI BILAL MD`
+                caption: `${data.title}\n\n> 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸`
               }, { quoted: mek });
               break;
 
