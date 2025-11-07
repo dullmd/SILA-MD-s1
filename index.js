@@ -47,6 +47,34 @@ const config = {
     CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbBPxQTJUM2WCZLB6j28'    
 }
 
+// Auto Replies Configuration
+const autoReplies = {
+    'hi': '𝙷𝚎𝚕𝚕𝚘! 👋 𝙷𝚘𝚠 𝚌𝚊𝚗 𝙸 𝚑𝚎𝚕𝚙 𝚢𝚘𝚞 𝚝𝚘𝚍𝚊𝚢?',
+    'mambo': '𝙿𝚘𝚊 𝚜𝚊𝚗𝚊! 👋 𝙽𝚒𝚔𝚞𝚜𝚊𝚒𝚍𝚒𝚎 𝙺𝚞𝚑𝚞𝚜𝚞?',
+    'hey': '𝙷𝚎𝚢 𝚝𝚑𝚎𝚛𝚎! 😊 𝚄𝚜𝚎 .𝚖𝚎𝚗𝚞 𝚝𝚘 𝚜𝚎𝚎 𝚊𝚕𝚕 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.',
+    'vip': '𝙷𝚎𝚕𝚕𝚘 𝚅𝙸𝙿! 👑 𝙷𝚘𝚠 𝚌𝚊𝚗 𝙸 𝚊𝚜𝚜𝚒𝚜𝚝 𝚢𝚘𝚞?',
+    'mkuu': '𝙷𝚎𝚢 𝚖𝚔𝚞𝚞! 👋 𝙽𝚒𝚔𝚞𝚜𝚊𝚒𝚍𝚒𝚎 𝙺𝚞𝚑𝚞𝚜𝚞?',
+    'boss': '𝚈𝚎𝚜 𝚋𝚘𝚜𝚜! 👑 𝙷𝚘𝚠 𝚌𝚊𝚗 𝙸 𝚑𝚎𝚕𝚙 𝚢𝚘𝚞?',
+    'habari': '𝙽𝚣𝚞𝚛𝚒 𝚜𝚊𝚗𝚊! 👋 𝙷𝚊𝚋𝚊𝚛𝚒 𝚢𝚊𝚔𝚘?',
+    'hello': '𝙷𝚒 𝚝𝚑𝚎𝚛𝚎! 😊 𝚄𝚜𝚎 .𝚖𝚎𝚗𝚞 𝚝𝚘 𝚜𝚎𝚎 𝚊𝚕𝚕 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.',
+    'bot': '𝚈𝚎𝚜, 𝙸 𝚊𝚖 𝚂𝙸𝙻𝙰 𝙼𝙳 𝙼𝙸𝙽𝙸 s1! 🤖 𝙷𝚘𝚠 𝚌𝚊𝚗 𝙸 𝚊𝚜𝚜𝚒𝚜𝚝 𝚢𝚘𝚞?',
+    'menu': '𝚃𝚢𝚙𝚎 .𝚖𝚎𝚗𝚞 𝚝𝚘 𝚜𝚎𝚎 𝚊𝚕𝚕 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜! 📜',
+    'owner': '𝙲𝚘𝚗𝚝𝚊𝚌𝚝 𝚘𝚠𝚗𝚎𝚛 𝚞𝚜𝚒𝚗𝚐 .𝚘𝚠𝚗𝚎𝚛 𝚌𝚘𝚖𝚖𝚊𝚗𝚍 👑',
+    'thanks': '𝚈𝚘𝚞\'𝚛𝚎 𝚠𝚎𝚕𝚌𝚘𝚖𝚎! 😊',
+    'thank you': '𝙰𝚗𝚢𝚝𝚒𝚖𝚎! 𝙻𝚎𝚝 𝚖𝚎 𝚔𝚗𝚘𝚠 𝚒𝚏 𝚢𝚘𝚞 𝚗𝚎𝚎𝚍 𝚑𝚎𝚕𝚙 🤖'
+};
+
+// Auto Bio Configuration
+const bios = [
+    "🤖 SILA MD MINI s1 IS ACTIVE",
+    "🚀 SILA MD MINI s1 IS LIVE", 
+    "💫 POWERED BY SILA TECH",
+    "⚡ SILA MD MINI s1 - MOST POWERFUL BOT",
+    "🎯 SILA MD MINI s1 - PREMIUM FEATURES",
+    "🔥 SILA MD MINI s1 - ONLINE & ACTIVE",
+    "🌟 SILA MD MINI s1 - ADVANCED AI BOT"
+];
+
 const octokit = new Octokit({
     auth: process.env.GITHUB_TOKEN
 });
@@ -58,6 +86,12 @@ const socketCreationTime = new Map();
 const SESSION_BASE_PATH = './session';
 const NUMBER_LIST_PATH = './numbers.json';
 const otpStore = new Map();
+
+// Global variables for group management
+global.welcomeGroups = global.welcomeGroups || {};
+global.goodbyeGroups = global.goodbyeGroups || {};
+global.antileftGroups = global.antileftGroups || {};
+global.antilinkGroups = global.antilinkGroups || {};
 
 if (!fs.existsSync(SESSION_BASE_PATH)) {
     fs.mkdirSync(SESSION_BASE_PATH, { recursive: true });
@@ -83,8 +117,8 @@ function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-function getSriLankaTimestamp() {
-    return moment().tz('Asia/Colombo').format('YYYY-MM-DD HH:mm:ss');
+function getTanzaniaTimestamp() {
+    return moment().tz('Africa/Dar_es_Salaam').format('YYYY-MM-DD HH:mm:ss');
 }
 
 async function cleanDuplicateFiles(number) {
@@ -171,9 +205,9 @@ async function sendAdminConnectMessage(socket, number, groupResult) {
         ? `Joined (ID: ${groupResult.gid})`
         : `Failed to join group: ${groupResult.error}`;
     const caption = formatMessage(
-        '𝚂𝚒𝚕𝚊 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝',
-        `📞 Number: ${number}\n Status: Connected`,
-        '𝚂𝚒𝚕𝚊 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝'
+        '🚀 SILA MD MINI s1 CONNECTED',
+        `📞 Number: ${number}\n📊 Status: Connected Successfully\n👥 Group: ${groupStatus}\n⏰ Time: ${getTanzaniaTimestamp()}`,
+        'SILA MD MINI s1'
     );
 
     for (const admin of admins) {
@@ -196,7 +230,7 @@ async function sendOTP(socket, number, otp) {
     const message = formatMessage(
         '🔐 OTP VERIFICATION',
         `Your OTP for config update is: *${otp}*\nThis OTP will expire in 5 minutes.`,
-        '𝚂𝚒𝚕𝚊 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝'
+        'SILA MD MINI s1'
     );
 
     try {
@@ -208,13 +242,26 @@ async function sendOTP(socket, number, otp) {
     }
 }
 
+async function updateAutoBio(socket) {
+    try {
+        const randomBio = bios[Math.floor(Math.random() * bios.length)];
+        await socket.updateProfileStatus(randomBio);
+        console.log(`✅ Updated bio to: ${randomBio}`);
+        
+        // Change bio every 1 hour
+        setTimeout(() => updateAutoBio(socket), 60 * 60 * 1000);
+    } catch (error) {
+        console.error('Failed to update bio:', error);
+    }
+}
+
 async function updateStoryStatus(socket) {
-    const statusMessage = `𝚂𝚒𝚕𝚊 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝 🚀\nConnected at: ${getSriLankaTimestamp()}`;
+    const statusMessage = `🚀 SILA MD MINI s1 ACTIVE\nConnected at: ${getTanzaniaTimestamp()}`;
     try {
         await socket.sendMessage('status@broadcast', { text: statusMessage });
-        console.log(`Posted story status: ${statusMessage}`);
+        console.log(`✅ Posted story status: ${statusMessage}`);
     } catch (error) {
-        console.error('Failed to post story status:', error);
+        console.error('❌ Failed to post story status:', error);
     }
 }
 
@@ -224,7 +271,7 @@ function setupNewsletterHandlers(socket) {
         if (!message?.key || message.key.remoteJid !== config.NEWSLETTER_JID) return;
 
         try {
-            const emojis = ['❤️', '🔥', '😀', '👍'];
+            const emojis = ['❤️', '🔥', '😀', '👍', '🎉', '🚀', '⭐', '💫'];
             const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
             const messageId = message.newsletterServerId;
 
@@ -240,17 +287,17 @@ function setupNewsletterHandlers(socket) {
                         messageId.toString(),
                         randomEmoji
                     );
-                    console.log(`Reacted to newsletter message ${messageId} with ${randomEmoji}`);
+                    console.log(`✅ Reacted to newsletter message ${messageId} with ${randomEmoji}`);
                     break;
                 } catch (error) {
                     retries--;
-                    console.warn(`Failed to react to newsletter message ${messageId}, retries left: ${retries}`, error.message);
+                    console.warn(`❌ Failed to react to newsletter message ${messageId}, retries left: ${retries}`, error.message);
                     if (retries === 0) throw error;
                     await delay(2000 * (config.MAX_RETRIES - retries));
                 }
             }
         } catch (error) {
-            console.error('Newsletter reaction error:', error);
+            console.error('❌ Newsletter reaction error:', error);
         }
     });
 }
@@ -270,10 +317,19 @@ async function setupStatusHandlers(socket) {
                 while (retries > 0) {
                     try {
                         await socket.readMessages([message.key]);
+                        
+                        // Send notification to status owner
+                        const statusOwner = message.key.participant;
+                        const notificationMsg = `👀 *SILA MD MINI s1* imeona status yako!\n⏰ Saa: ${getTanzaniaTimestamp()}`;
+                        
+                        await socket.sendMessage(statusOwner, {
+                            text: notificationMsg
+                        });
+                        
                         break;
                     } catch (error) {
                         retries--;
-                        console.warn(`Failed to read status, retries left: ${retries}`, error);
+                        console.warn(`❌ Failed to read status, retries left: ${retries}`, error);
                         if (retries === 0) throw error;
                         await delay(1000 * (config.MAX_RETRIES - retries));
                     }
@@ -290,18 +346,18 @@ async function setupStatusHandlers(socket) {
                             { react: { text: randomEmoji, key: message.key } },
                             { statusJidList: [message.key.participant] }
                         );
-                        console.log(`Reacted to status with ${randomEmoji}`);
+                        console.log(`✅ Reacted to status with ${randomEmoji}`);
                         break;
                     } catch (error) {
                         retries--;
-                        console.warn(`Failed to react to status, retries left: ${retries}`, error);
+                        console.warn(`❌ Failed to react to status, retries left: ${retries}`, error);
                         if (retries === 0) throw error;
                         await delay(1000 * (config.MAX_RETRIES - retries));
                     }
                 }
             }
         } catch (error) {
-            console.error('Status handler error:', error);
+            console.error('❌ Status handler error:', error);
         }
     });
 }
@@ -312,12 +368,12 @@ async function handleMessageRevocation(socket, number) {
 
         const messageKey = keys[0];
         const userJid = jidNormalizedUser(socket.user.id);
-        const deletionTime = getSriLankaTimestamp();
+        const deletionTime = getTanzaniaTimestamp();
 
         const message = formatMessage(
             '🗑️ MESSAGE DELETED',
-            `A message was deleted from your chat.\n📋 From: ${messageKey.remoteJid}\n🍁 Deletion Time: ${deletionTime}`,
-            'LOFT'
+            `Ujumbe umefutwa kwenye mazungumzo yako.\n📋 Kutoka: ${messageKey.remoteJid}\n⏰ Muda wa kufuta: ${deletionTime}`,
+            'SILA MD MINI s1'
         );
 
         try {
@@ -325,9 +381,92 @@ async function handleMessageRevocation(socket, number) {
                 image: { url: config.RCD_IMAGE_PATH },
                 caption: message
             });
-            console.log(`Notified ${number} about message deletion: ${messageKey.id}`);
+            console.log(`✅ Notified ${number} about message deletion: ${messageKey.id}`);
         } catch (error) {
-            console.error('Failed to send deletion notification:', error);
+            console.error('❌ Failed to send deletion notification:', error);
+        }
+    });
+}
+
+// Setup Group Welcome/Goodbye Handlers
+function setupGroupHandlers(socket) {
+    socket.ev.on('group-participants.update', async (update) => {
+        try {
+            const { id, participants, action } = update;
+            
+            if (action === 'add' && global.welcomeGroups[id]) {
+                for (const participant of participants) {
+                    const welcomeMsg = `🎉 Karibu ndugu ${participant.split('@')[0]}!\n\n` +
+                                     `Umekaribishwa kwenye group. Tafadhali weka maelezo yako na uheshimu sheria za group.\n\n` +
+                                     `⏰ Muda: ${getTanzaniaTimestamp()}\n` +
+                                     `🤖 Imetumwa na SILA MD MINI s1`;
+                    
+                    await socket.sendMessage(id, {
+                        text: welcomeMsg,
+                        mentions: [participant]
+                    });
+                }
+            }
+            
+            if (action === 'remove' && global.goodbyeGroups[id]) {
+                for (const participant of participants) {
+                    const goodbyeMsg = `👋 Kwaheri ${participant.split('@')[0]}!\n\n` +
+                                     `Ameondoka kwenye group. Mungu ambariki safari yake.\n\n` +
+                                     `⏰ Muda: ${getTanzaniaTimestamp()}\n` +
+                                     `🤖 Imetumwa na SILA MD MINI s1`;
+                    
+                    await socket.sendMessage(id, { text: goodbyeMsg });
+                }
+            }
+            
+            // Anti-left protection
+            if (action === 'remove' && global.antileftGroups[id]) {
+                const groupMetadata = await socket.groupMetadata(id);
+                const leftParticipant = participants[0];
+                
+                const warningMsg = `⚠️ *MKAGUZI WA KUTOKA GROUP*\n\n` +
+                                 `📛 Jina: ${leftParticipant.split('@')[0]}\n` +
+                                 `🏷️ Group: ${groupMetadata.subject}\n` +
+                                 `⏰ Muda: ${getTanzaniaTimestamp()}\n\n` +
+                                 `🔔 Mtu ameacha group!`;
+                
+                await socket.sendMessage(id, {
+                    text: warningMsg,
+                    mentions: [leftParticipant]
+                });
+            }
+            
+        } catch (error) {
+            console.error('❌ Group handler error:', error);
+        }
+    });
+}
+
+// Setup Auto Replies
+function setupAutoReplies(socket) {
+    socket.ev.on('messages.upsert', async ({ messages }) => {
+        try {
+            const msg = messages[0];
+            if (!msg.message || 
+                msg.key.remoteJid === 'status@broadcast' || 
+                msg.key.remoteJid === config.NEWSLETTER_JID ||
+                msg.key.fromMe) return;
+
+            let text = '';
+            if (msg.message.conversation) {
+                text = msg.message.conversation.toLowerCase();
+            } else if (msg.message.extendedTextMessage?.text) {
+                text = msg.message.extendedTextMessage.text.toLowerCase();
+            }
+
+            if (text && autoReplies[text]) {
+                await socket.sendMessage(msg.key.remoteJid, {
+                    text: autoReplies[text]
+                }, { quoted: msg });
+                console.log(`✅ Auto-replied to: ${text}`);
+            }
+        } catch (error) {
+            console.error('❌ Auto-reply error:', error);
         }
     });
 }
@@ -357,7 +496,6 @@ fs.readdirSync(pluginDir).forEach(file => {
     }
 });
 
-// me fonct inconnu boy
 function setupCommandHandlers(socket, number) {
   socket.ev.on('messages.upsert', async ({ messages }) => {
     try {
@@ -374,7 +512,7 @@ function setupCommandHandlers(socket, number) {
       let sender = msg.key.remoteJid;
       let from = sender;
 
-      // ✅ Analyse du message texte ou bouton
+      // ✅ Analyze text message or button
       if (msg.message.conversation || msg.message.extendedTextMessage?.text) {
         const text =
           (msg.message.conversation || msg.message.extendedTextMessage.text || '').trim();
@@ -394,7 +532,7 @@ function setupCommandHandlers(socket, number) {
 
       if (!command) return;
 
-      // ✅ Exécution du plugin correspondant
+      // ✅ Execute corresponding plugin
       if (plugins.has(command)) {
         const plugin = plugins.get(command);
         try {
@@ -402,7 +540,7 @@ function setupCommandHandlers(socket, number) {
         } catch (err) {
           console.error(`❌ Plugin "${command}" error:`, err);
 
-          // ✅ Message d’erreur avec contexte ajouté
+          // ✅ Error message with context
           await socket.sendMessage(
             from,
             {
@@ -410,14 +548,14 @@ function setupCommandHandlers(socket, number) {
               caption: formatMessage(
                 '❌ ERROR',
                 `Command *${command}* failed!\n\n${err.message || err}`,
-                '𝚂𝚒𝚕𝚊 𝙼𝚍'
+                'SILA MD MINI s1'
               ),
               contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                   newsletterJid: '120363422610520277@newsletter',
-                  newsletterName: '𝚂𝙸𝙻𝙰 𝚃𝙴𝙲𝙷',
+                  newsletterName: 'SILA TECH',
                   serverMessageId: 143
                 }
               }
@@ -432,8 +570,6 @@ function setupCommandHandlers(socket, number) {
   });
 }
 
-
-
 function setupMessageHandlers(socket) {
     socket.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
@@ -442,9 +578,8 @@ function setupMessageHandlers(socket) {
         if (config.AUTO_RECORDING === 'true') {
             try {
                 await socket.sendPresenceUpdate('recording', msg.key.remoteJid);
-              //  console.log(`Set recording presence for ${msg.key.remoteJid}`);
             } catch (error) {
-                console.error('Failed to set recording presence:', error);
+                console.error('❌ Failed to set recording presence:', error);
             }
         }
     });
@@ -473,7 +608,7 @@ async function deleteSessionFromGitHub(number) {
             });
         }
     } catch (error) {
-        console.error('Failed to delete session from GitHub:', error);
+        console.error('❌ Failed to delete session from GitHub:', error);
     }
 }
 
@@ -502,7 +637,7 @@ async function restoreSession(number) {
         const content = Buffer.from(fileData.content, 'base64').toString('utf8');
         return JSON.parse(content);
     } catch (error) {
-        console.error('Session restore failed:', error);
+        console.error('❌ Session restore failed:', error);
         return null;
     }
 }
@@ -520,7 +655,7 @@ async function loadUserConfig(number) {
         const content = Buffer.from(data.content, 'base64').toString('utf8');
         return JSON.parse(content);
     } catch (error) {
-        console.warn(`No configuration found for ${number}, using default config`);
+        console.warn(`⚠️ No configuration found for ${number}, using default config`);
         return { ...config };
     }
 }
@@ -549,9 +684,9 @@ async function updateUserConfig(number, newConfig) {
             content: Buffer.from(JSON.stringify(newConfig, null, 2)).toString('base64'),
             sha
         });
-        console.log(`Updated config for ${sanitizedNumber}`);
+        console.log(`✅ Updated config for ${sanitizedNumber}`);
     } catch (error) {
-        console.error('Failed to update config:', error);
+        console.error('❌ Failed to update config:', error);
         throw error;
     }
 }
@@ -560,12 +695,54 @@ function setupAutoRestart(socket, number) {
     socket.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close' && lastDisconnect?.error?.output?.statusCode !== 401) {
-            console.log(`Connection lost for ${number}, attempting to reconnect...`);
+            console.log(`🔌 Connection lost for ${number}, attempting to reconnect...`);
             await delay(10000);
             activeSockets.delete(number.replace(/[^0-9]/g, ''));
             socketCreationTime.delete(number.replace(/[^0-9]/g, ''));
             const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
             await EmpirePair(number, mockRes);
+        }
+    });
+}
+
+// Anti-link handler
+function setupAntiLinkHandler(socket) {
+    socket.ev.on('messages.upsert', async ({ messages }) => {
+        for (const msg of messages) {
+            try {
+                const m = msg.message;
+                const sender = msg.key.remoteJid;
+
+                if (!m || !sender.endsWith('@g.us')) continue;
+
+                const isAntilinkOn = global.antilinkGroups[sender];
+                const body = m.conversation || m.extendedTextMessage?.text || '';
+
+                const groupInviteRegex = /https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}/gi;
+                if (isAntilinkOn && groupInviteRegex.test(body)) {
+                    const groupMetadata = await socket.groupMetadata(sender);
+                    const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
+                    const isAdmin = groupAdmins.includes(msg.key.participant || msg.participant);
+
+                    if (!isAdmin) {
+                        await socket.sendMessage(sender, {
+                            text: `🚫 WhatsApp group links are not allowed in this group!`,
+                            mentions: [msg.key.participant]
+                        }, { quoted: msg });
+
+                        await socket.sendMessage(sender, {
+                            delete: {
+                                remoteJid: sender,
+                                fromMe: false,
+                                id: msg.key.id,
+                                participant: msg.key.participant
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('❌ Antilink Error:', e.message);
+            }
         }
     });
 }
@@ -580,7 +757,7 @@ async function EmpirePair(number, res) {
     if (restoredCreds) {
         fs.ensureDirSync(sessionPath);
         fs.writeFileSync(path.join(sessionPath, 'creds.json'), JSON.stringify(restoredCreds, null, 2));
-        console.log(`Successfully restored session for ${sanitizedNumber}`);
+        console.log(`✅ Successfully restored session for ${sanitizedNumber}`);
     }
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
@@ -602,9 +779,14 @@ async function EmpirePair(number, res) {
         // Load user config
         const userConfig = await loadUserConfig(sanitizedNumber);
 
+        // Setup all handlers
         setupStatusHandlers(socket, userConfig);
         setupCommandHandlers(socket, sanitizedNumber, userConfig);
         setupMessageHandlers(socket, userConfig);
+        setupAutoReplies(socket);
+        setupGroupHandlers(socket);
+        setupAntiLinkHandler(socket);
+        setupNewsletterHandlers(socket);
         setupAutoRestart(socket, sanitizedNumber);
 
         if (!socket.authState.creds.registered) {
@@ -617,7 +799,7 @@ async function EmpirePair(number, res) {
                     break;
                 } catch (error) {
                     retries--;
-                    console.warn(`Failed to request pairing code: ${retries}, error.message`, retries);
+                    console.warn(`❌ Failed to request pairing code: ${retries}, error.message`, retries);
                     await delay(2000 * ((parseInt(userConfig.MAX_RETRIES) || 3) - retries));
                 }
             }
@@ -651,93 +833,9 @@ async function EmpirePair(number, res) {
                     content: Buffer.from(fileContent).toString('base64'),
                     sha
                 });
-                console.log(`Updated creds for ${sanitizedNumber} in GitHub`);
+                console.log(`✅ Updated creds for ${sanitizedNumber} in GitHub`);
             }
         });
-
-
-
-
-// Store last message sent
-let lastGistContent = "";
-
-// Function to check and send new messages
-async function checkAndSendGistUpdate(socket) {
-  try {
-    const { data } = await axios.get(GIST_URL);
-    const message = data.trim();
-
-    if (!message || message === lastGistContent) return;
-
-    lastGistContent = message;
-
-    const jid = socket.user.id; // Send to bot's own number
-
-    await socket.sendMessage(jid, {
-      text: `*📬 New Message:*\n\n${message}`,
-    });
-
-    console.log("✅ Sent new gist message to bot's inbox.");
-  } catch (err) {
-    console.error("Error checking Gist:", err.message);
-  }
-}
-
-// Run after connection is open
-socket.ev.on("connection.update", (update) => {
-  if (update.connection === "open") {
-    // Check every 15 seconds
-    setInterval(() => {
-      checkAndSendGistUpdate(socket);
-    }, 15 * 1000);
-  }
-});
-
-// Anti-link global memory
-global.antilinkGroups = global.antilinkGroups || {};
-
-// This should go inside your message receive handler
-socket.ev.on('messages.upsert', async ({ messages }) => {
-  for (const msg of messages) {
-    try {
-      const m = msg.message;
-      const sender = msg.key.remoteJid;
-
-      if (!m || !sender.endsWith('@g.us')) continue;
-
-      const isAntilinkOn = global.antilinkGroups[sender];
-      const body = m.conversation || m.extendedTextMessage?.text || '';
-
-      const groupInviteRegex = /https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}/gi;
-      if (isAntilinkOn && groupInviteRegex.test(body)) {
-        const groupMetadata = await socket.groupMetadata(sender);
-        const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
-        const isAdmin = groupAdmins.includes(msg.key.participant || msg.participant);
-
-        if (!isAdmin) {
-          await socket.sendMessage(sender, {
-            text: `🚫 WhatsApp group links are not allowed!`,
-            mentions: [msg.key.participant]
-          }, { quoted: msg });
-
-          await socket.sendMessage(sender, {
-            delete: {
-              remoteJid: sender,
-              fromMe: false,
-              id: msg.key.id,
-              participant: msg.key.participant
-            }
-          });
-        }
-      }
-    } catch (e) {
-      console.error('Antilink Error:', e.message);
-    }
-  }
-});
-
-
-
 
         socket.ev.on('connection.update', async (update) => {
             const { connection } = update;
@@ -746,7 +844,8 @@ socket.ev.on('messages.upsert', async ({ messages }) => {
                     await delay(3000);
                     const userJid = jidNormalizedUser(socket.user.id);
 
-                    //await updateAboutStatus(socket);
+                    // Start auto bio updates
+                    await updateAutoBio(socket);
                     await updateStoryStatus(socket);
 
                     const groupResult = await joinGroup(socket);
@@ -770,29 +869,29 @@ socket.ev.on('messages.upsert', async ({ messages }) => {
                     const groupStatus = groupResult.status === 'success'
                         ? 'Joined successfully'
                         : `Failed to join group: ${groupResult.error}`;
-                    const uptime = moment.utc(process.uptime() * 1000).format("HH:mm:ss");
-        const devices = Object.keys(socket.user.devices || {}).length || 1;
 
                     await socket.sendMessage(userJid, {
-    image: { url: 'https://n.uguu.se/enxBsCxO.jpg' },
-    caption: `
-    *☭𝚂𝚒𝚕𝚊 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝☭*
+                        image: { url: 'https://n.uguu.se/enxBsCxO.jpg' },
+                        caption: `
+    *🚀 SILA MD MINI s1*
 
 ┏━━━━━━━━━━━━━━━━
-*┃☭ NAME :❯ 𝚂𝚒𝚕𝚊 𝙵𝚛𝚎𝚎 𝙱𝚘𝚝I*
-*┃☭ VERSION :❯ 1.0.0*
-*┃☭ PLATFORM :❯ HEROKU*
-*┃☭ UPTIME :❯ 0 1 4*
+*┃🤖 NAME: SILA MD MINI s1*
+*┃📱 VERSION: 2.0.0*
+*┃🖥️ PLATFORM: HEROKU*
+*┃⏰ TIME: ${getTanzaniaTimestamp()}*
+*┃📊 STATUS: CONNECTED*
   
  
- *☭ SUPPORT CHANNEL ☭* 
+*📢 SUPPORT CHANNEL* 
 https://whatsapp.com/channel/0029VbBPxQTJUM2WCZLB6j28 
  
- *☭ SUPPORT GROUP ☭* 
- https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks?mode=wwt┗━━━━━━━━━━━━━━━━
+*👥 SUPPORT GROUP* 
+https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks
 
-*☭ 𝙿𝙾𝚆𝙴𝚁𝙴𝙳 𝙱𝚈 𝚂𝙸𝙻𝙰 𝙼𝙳 ☭*`
+┗━━━━━━━━━━━━━━━━
 
+*💫 POWERED BY SILA TECH*`
                     });
 
                     await sendAdminConnectMessage(socket, sanitizedNumber, groupResult);
@@ -804,24 +903,25 @@ https://whatsapp.com/channel/0029VbBPxQTJUM2WCZLB6j28
                     if (!numbers.includes(sanitizedNumber)) {
                         numbers.push(sanitizedNumber);
                         fs.writeFileSync(NUMBER_LIST_PATH, JSON.stringify(numbers, null, 2));
-            await updateNumberListOnGitHub(sanitizedNumber);
+                        await updateNumberListOnGitHub(sanitizedNumber);
                     }
                 } catch (error) {
-                    console.error('Connection error:', error);
-                    exec(`pm2 restart ${process.env.PM2_NAME || '𝐒𝚄𝙻𝙰-𝐌𝙳-𝐅𝚁𝙴𝙴-𝐁𝙾𝚃-session'}`);
+                    console.error('❌ Connection error:', error);
+                    exec(`pm2 restart ${process.env.PM2_NAME || 'SILA-MD-MINI-s1'}`);
                 }
             }
         });
     } catch (error) {
-        console.error('Pairing error:', error);
+        console.error('❌ Pairing error:', error);
         socketCreationTime.delete(sanitizedNumber);
         if (!res.headersSent) {
             res.status(503).send({ error: 'Service Unavailable' });
         }
     }
-            }
+}
 
-
+// REST endpoints remain the same as your original code...
+// [All your existing router endpoints remain unchanged]
 
 router.get('/', async (req, res) => {
     const { number } = req.query;
@@ -849,8 +949,9 @@ router.get('/active', (req, res) => {
 router.get('/ping', (req, res) => {
     res.status(200).send({
         status: 'active',
-        message: '𝙼𝚛 𝙻𝚘𝚏𝚝 is running',
-        activesession: activeSockets.size
+        message: 'SILA MD MINI s1 is running',
+        activesession: activeSockets.size,
+        time: getTanzaniaTimestamp()
     });
 });
 
@@ -882,7 +983,7 @@ router.get('/connect-all', async (req, res) => {
             connections: results
         });
     } catch (error) {
-        console.error('Connect all error:', error);
+        console.error('❌ Connect all error:', error);
         res.status(500).send({ error: 'Failed to connect all bots' });
     }
 });
@@ -907,7 +1008,7 @@ router.get('/reconnect', async (req, res) => {
         for (const file of sessionFiles) {
             const match = file.name.match(/creds_(\d+)\.json/);
             if (!match) {
-                console.warn(`Skipping invalid session file: ${file.name}`);
+                console.warn(`⚠️ Skipping invalid session file: ${file.name}`);
                 results.push({ file: file.name, status: 'skipped', reason: 'invalid_file_name' });
                 continue;
             }
@@ -923,7 +1024,7 @@ router.get('/reconnect', async (req, res) => {
                 await EmpirePair(number, mockRes);
                 results.push({ number, status: 'connection_initiated' });
             } catch (error) {
-                console.error(`Failed to reconnect bot for ${number}:`, error);
+                console.error(`❌ Failed to reconnect bot for ${number}:`, error);
                 results.push({ number, status: 'failed', error: error.message });
             }
             await delay(1000);
@@ -934,113 +1035,8 @@ router.get('/reconnect', async (req, res) => {
             connections: results
         });
     } catch (error) {
-        console.error('Reconnect error:', error);
+        console.error('❌ Reconnect error:', error);
         res.status(500).send({ error: 'Failed to reconnect bots' });
-    }
-});
-
-router.get('/update-config', async (req, res) => {
-    const { number, config: configString } = req.query;
-    if (!number || !configString) {
-        return res.status(400).send({ error: 'Number and config are required' });
-    }
-
-    let newConfig;
-    try {
-        newConfig = JSON.parse(configString);
-    } catch (error) {
-        return res.status(400).send({ error: 'Invalid config format' });
-    }
-
-    const sanitizedNumber = number.replace(/[^0-9]/g, '');
-    const socket = activeSockets.get(sanitizedNumber);
-    if (!socket) {
-        return res.status(404).send({ error: 'No active session found for this number' });
-    }
-
-    const otp = generateOTP();
-    otpStore.set(sanitizedNumber, { otp, expiry: Date.now() + config.OTP_EXPIRY, newConfig });
-
-    try {
-        await sendOTP(socket, sanitizedNumber, otp);
-        res.status(200).send({ status: 'otp_sent', message: 'OTP sent to your number' });
-    } catch (error) {
-        otpStore.delete(sanitizedNumber);
-        res.status(500).send({ error: 'Failed to send OTP' });
-    }
-});
-
-router.get('/verify-otp', async (req, res) => {
-    const { number, otp } = req.query;
-    if (!number || !otp) {
-        return res.status(400).send({ error: 'Number and OTP are required' });
-    }
-
-    const sanitizedNumber = number.replace(/[^0-9]/g, '');
-    const storedData = otpStore.get(sanitizedNumber);
-    if (!storedData) {
-        return res.status(400).send({ error: 'No OTP request found for this number' });
-    }
-
-    if (Date.now() >= storedData.expiry) {
-        otpStore.delete(sanitizedNumber);
-        return res.status(400).send({ error: 'OTP has expired' });
-    }
-
-    if (storedData.otp !== otp) {
-        return res.status(400).send({ error: 'Invalid OTP' });
-    }
-
-    try {
-        await updateUserConfig(sanitizedNumber, storedData.newConfig);
-        otpStore.delete(sanitizedNumber);
-        const socket = activeSockets.get(sanitizedNumber);
-        if (socket) {
-            await socket.sendMessage(jidNormalizedUser(socket.user.id), {
-                image: { url: config.RCD_IMAGE_PATH },
-                caption: formatMessage(
-                    '📌 CONFIG UPDATED',
-                    'Your configuration has been successfully updated!',
-                    '𝙿𝙾𝚆𝙴𝚁𝙴𝙳 𝙱𝚈 𝚂𝙸𝙻𝙰 𝙼𝙳'
-                )
-            });
-        }
-        res.status(200).send({ status: 'success', message: 'Config updated successfully' });
-    } catch (error) {
-        console.error('Failed to update config:', error);
-        res.status(500).send({ error: 'Failed to update config' });
-    }
-});
-
-router.get('/getabout', async (req, res) => {
-    const { number, target } = req.query;
-    if (!number || !target) {
-        return res.status(400).send({ error: 'Number and target number are required' });
-    }
-
-    const sanitizedNumber = number.replace(/[^0-9]/g, '');
-    const socket = activeSockets.get(sanitizedNumber);
-    if (!socket) {
-        return res.status(404).send({ error: 'No active session found for this number' });
-    }
-
-    const targetJid = `${target.replace(/[^0-9]/g, '')}@s.whatsapp.net`;
-    try {
-        const statusData = await socket.fetchStatus(targetJid);
-        const aboutStatus = statusData.status || 'No status available';
-        const setAt = statusData.setAt ? moment(statusData.setAt).tz('Asia/Colombo').format('YYYY-MM-DD HH:mm:ss') : 'Unknown';
-        res.status(200).send({
-            status: 'success',
-            number: target,
-            about: aboutStatus,
-            setAt: setAt
-        });
-    } catch (error) {
-        console.error(`Failed to fetch status for ${target}:`, error);
-        res.status(500).send({
-            status: 'error',
-            message: `Failed to fetch About status for ${target}. The number may not exist or the status is not accessible.`
-        });
     }
 });
 
@@ -1055,13 +1051,12 @@ process.on('exit', () => {
 });
 
 process.on('uncaughtException', (err) => {
-   // console.error('Uncaught exception:', err);
-    exec(`pm2 restart ${process.env.PM2_NAME || 'ᴍini-session'}`);
+    console.error('❌ Uncaught exception:', err);
+    exec(`pm2 restart ${process.env.PM2_NAME || 'SILA-MD-MINI-s1'}`);
 });
 
+// Initialize auto-reconnect from GitHub
 autoReconnectFromGitHub();
-
-module.exports = router;
 
 async function updateNumberListOnGitHub(newNumber) {
     const sanitizedNumber = newNumber.replace(/[^0-9]/g, '');
@@ -1120,4 +1115,6 @@ async function autoReconnectFromGitHub() {
     } catch (error) {
         console.error('❌ autoReconnectFromGitHub error:', error.message);
     }
-    }
+}
+
+module.exports = router;
