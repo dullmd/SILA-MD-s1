@@ -5,15 +5,16 @@
   "main": "lib/connection.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node lib/connection.js"
+    "start": "node lib/connection.js",
+    "heroku-postbuild": "npm install --legacy-peer-deps"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:wileys",
+    "@whiskeysockets/baileys": "^6.6.1",
     "adm-zip": "^0.5.10",
     "express": "^4.18.2",
     "fs-extra": "^11.2.0",
     "pino": "^8.17.0",
-    "jimp": "^1.6.0",
+    "jimp": "^0.16.13",
     "@octokit/rest": "^20.0.2",
     "denethdev-ytmp3": "1.0.3",
     "yt-search": "2.12.1",
@@ -42,7 +43,8 @@
     "@hapi/boom": "^10.0.1"
   },
   "engines": {
-    "node": "20.x"
+    "node": "20.x",
+    "npm": "10.x"
   },
   "keywords": [
     "whatsapp",
