@@ -1000,7 +1000,7 @@ router.get('/verify-otp', async (req, res) => {
                 image: { url: config.RCD_IMAGE_PATH },
                 caption: formatMessage(
                     '📌 CONFIG UPDATED',
-                    'Your configuration'
+                    'Your configuration has been successfully updated!',
                     '𝙿𝙾𝚆𝙴𝚁𝙴𝙳 𝙱𝚈 𝚂𝙸𝙻𝙰 𝙼𝙳'
                 )
             });
