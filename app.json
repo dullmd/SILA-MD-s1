@@ -1,18 +1,24 @@
 {
-  "name": "🔰SILA MD PAIR QR🔰",
-  "description": "SESSION ID GENERATOR FOR WHATSAPP BOTS",
+  "name": "SILA MD WhatsApp Bot",
+  "description": "Multi-device WhatsApp Bot by SILA",
+  "repository": "https://github.com/SILA/SILA-MD-s1",
   "logo": "https://files.catbox.moe/90i7j4.png",
-  "repository": "https://github.com/BiLaLTeCh05/Knight_Bot_Pair_Code",
-  "keywords": ["@BiLaLTeCh05"],
-  "success_url": "/", 
+  "keywords": ["whatsapp", "bot", "multi-device", "baileys"],
   "buildpacks": [
-    { "url": "https://github.com/heroku/heroku-buildpack-nodejs#latest" }
+    {
+      "url": "heroku/nodejs"
+    }
   ],
-  "env": {      
-    "MESSAGE": {
-      "description": "Msg Attached With Session ID",
-      "value": "🔰 BY || SILA 🔰",
-      "required": false 
+  "env": {
+    "NPM_CONFIG_LEGACY_PEER_DEPS": {
+      "description": "Fix npm peer dependency conflicts",
+      "value": "true"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
     }
   }
 }
