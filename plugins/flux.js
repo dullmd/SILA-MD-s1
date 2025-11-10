@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = {
-    command: "flux",
+    command: "flux2",
     alias: ["fluximg", "aiimg", "generate", "imgai"],
     desc: "Generate AI images using FLUX model",
     category: "ai",
