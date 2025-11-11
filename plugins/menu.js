@@ -122,8 +122,8 @@ module.exports = {
           forwardingScore: 999,
           isForwarded: true,
           forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363422610520277@newsletter',
-            newsletterName: '𝚂𝙸𝙻𝙰 TECH',
+            newsletterJid: '120363402325089913@newsletter',
+            newsletterName: '𝐒𝐈𝐋𝐀 𝐓𝐄𝐂𝐇',
             serverMessageId: 143
           }
         }
