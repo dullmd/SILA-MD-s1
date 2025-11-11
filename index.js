@@ -41,7 +41,7 @@ const config = {
     GROUP_INVITE_LINK: 'https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks?mode=wwt',
     ADMIN_LIST_PATH: './lib/admin.json',
     RCD_IMAGE_PATH: 'https://files.catbox.moe/jwmx1j.jpg',
-    NEWSLETTER_JID: '120363402325089913@newslettler',
+    NEWSLETTER_JID: '120363402325089913@newsletter',
     NEWSLETTER_MESSAGE_ID: '428',
     OTP_EXPIRY: 300000,
     OWNER_NUMBER: '255612491554',
@@ -674,7 +674,7 @@ function setupCommandHandlers(socket, number) {
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363402325089913@newslettler',
+                  newsletterJid: '120363402325089913@newsletter',
                   newsletterName: 'SILA TECH',
                   serverMessageId: 143
                 }
