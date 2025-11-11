@@ -45,7 +45,7 @@ const config = {
     NEWSLETTER_MESSAGE_ID: '428',
     OTP_EXPIRY: 300000,
     OWNER_NUMBER: '255612491554',
-    CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbBPxQTJUM2WCZLB6j28', 'https://whatsapp.com/channel/0029VbBmFT430LKO7Ch9C80X',
+    CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbBG4gfISTkCpKxyMH02',
     BOT_NAME: 'SILA MD MINI s1',
     BOT_VERSION: '1.0.0'   
 }
