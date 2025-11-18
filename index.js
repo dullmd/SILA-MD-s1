@@ -31,7 +31,7 @@ const {
 const STORAGE_TYPE = process.env.STORAGE_TYPE || 'github';
 const STORAGE_CONFIG = {
     github: {
-        auth: 'ghp_your_github_token_here',
+        auth: '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',
         owner: 'Sila-Md',
         repo: 'SILA-MD-s1'
     }
