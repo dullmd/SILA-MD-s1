@@ -20,12 +20,22 @@ const {
     delay,
     makeCacheableSignalKeyStore,
     Browsers,
-    jidNormalizedUser,
+    jidNormalutedUser,
     getContentType,
     proto,
     prepareWAMessageMedia,
     generateWAMessageFromContent
 } = require('@whiskeysockets/baileys');
+
+// Storage Configuration
+const STORAGE_TYPE = process.env.STORAGE_TYPE || 'github';
+const STORAGE_CONFIG = {
+    github: {
+        auth: 'ghp_your_github_token_here',
+        owner: 'Sila-Md',
+        repo: 'SILA-MD-s1'
+    }
+};
 
 const config = {
     WELCOME: 'true',
@@ -38,17 +48,42 @@ const config = {
     AUTO_LIKE_EMOJI: ['🥹', '👍', '😍', '💗', '🎈', '🎉', '🥳', '😎', '🚀', '🔥'],
     PREFIX: '.',
     MAX_RETRIES: 5,
-    GROUP_INVITE_LINK: 'https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks?mode=wwt',
     ADMIN_LIST_PATH: './lib/admin.json',
     RCD_IMAGE_PATH: 'https://files.catbox.moe/jwmx1j.jpg',
     NEWSLETTER_JID: '120363402325089913@newsletter',
     NEWSLETTER_MESSAGE_ID: '428',
     OTP_EXPIRY: 300000,
     OWNER_NUMBER: '255612491554',
-    CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbBG4gfISTkCpKxyMH02',
     BOT_NAME: 'SILA MD MINI s1',
     BOT_VERSION: '1.0.0'   
 }
+
+// Channel Configuration - CHANNELS ZOTE
+const CHANNEL_CONFIG = {
+    channels: [
+        {
+            jid: '120363402325089913@newsletter',
+            name: 'SILA TECH OFFICIAL',
+            link: 'https://whatsapp.com/channel/0029VbBG4gfISTkCpKxyMH02'
+        },
+        {
+            jid: '120363402325089913@newsletter',
+            name: 'SILA TECH UPDATES', 
+            link: 'https://whatsapp.com/channel/0029Vb7CLKM5vKAHHK9sR02z'
+        },
+        {
+            jid: '120363402325089913@newsletter',
+            name: 'SILA MD NEWS',
+            link: 'https://whatsapp.com/channel/0029VbBmFT430LKO7Ch9C80X'
+        }
+    ],
+    groups: [
+        {
+            inviteCode: 'IdGNaKt80DEBqirc2ek4ks',
+            name: 'SILA MD SUPPORT GROUP'
+        }
+    ]
+};
 
 // Auto Replies Configuration
 const autoReplies = {
@@ -67,9 +102,9 @@ const autoReplies = {
     'thank you': 'Anytime! Let me know if you need help 🤖'
 };
 
-// Auto Bio Configuration - Short bios
+// Auto Bio Configuration
 const bios = [
-     "🤖 sila md active",
+    "🤖 sila md active",
     "🚀 sila md online", 
     "💫 sila tech",
     "⚡ sila md power",
@@ -92,10 +127,10 @@ const bios = [
 ];
 
 const octokit = new Octokit({
-    auth: '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'
+    auth: STORAGE_CONFIG.github.auth
 });
-const owner = 'Sila-Md';
-const repo = 'SILA-MD-s1';
+const owner = STORAGE_CONFIG.github.owner;
+const repo = STORAGE_CONFIG.github.repo;
 
 const activeSockets = new Map();
 const socketCreationTime = new Map();
@@ -180,50 +215,141 @@ async function cleanDuplicateFiles(number) {
     }
 }
 
-async function joinGroup(socket) {
-    let retries = config.MAX_RETRIES;
-    const inviteCodeMatch = config.GROUP_INVITE_LINK.match(/chat\.whatsapp\.com\/([a-zA-Z0-9]+)/);
-    if (!inviteCodeMatch) {
-        console.error('Invalid group invite link format');
-        return { status: 'failed', error: 'Invalid group invite link' };
-    }
-    const inviteCode = inviteCodeMatch[1];
+// Function ya kujiunga na channels zote
+async function joinAllChannels(socket) {
+    console.log('📢 Joining all channels and groups...');
+    
+    const results = {
+        channels: [],
+        groups: []
+    };
 
-    while (retries > 0) {
+    // Join Channels
+    for (const channel of CHANNEL_CONFIG.channels) {
         try {
-            const response = await socket.groupAcceptInvite(inviteCode);
-            if (response?.gid) {
-                console.log(`Successfully joined group with ID: ${response.gid}`);
-                return { status: 'success', gid: response.gid };
+            let retries = config.MAX_RETRIES;
+            while (retries > 0) {
+                try {
+                    // Kwa channels, tumia newsletterFollow
+                    await socket.newsletterFollow(channel.jid);
+                    
+                    // React to latest message
+                    await socket.sendMessage(channel.jid, { 
+                        react: { 
+                            text: '❤️', 
+                            key: { id: config.NEWSLETTER_MESSAGE_ID } 
+                        } 
+                    });
+                    
+                    console.log(`✅ Joined channel: ${channel.name}`);
+                    results.channels.push({
+                        name: channel.name,
+                        status: 'success',
+                        link: channel.link
+                    });
+                    break;
+                } catch (error) {
+                    retries--;
+                    console.warn(`❌ Failed to join channel ${channel.name}, retries left: ${retries}`, error.message);
+                    if (retries === 0) {
+                        results.channels.push({
+                            name: channel.name,
+                            status: 'failed',
+                            error: error.message,
+                            link: channel.link
+                        });
+                    }
+                    await delay(2000 * (config.MAX_RETRIES - retries));
+                }
             }
-            throw new Error('No group ID in response');
         } catch (error) {
-            retries--;
-            let errorMessage = error.message || 'Unknown error';
-            if (error.message.includes('not-authorized')) {
-                errorMessage = 'Bot is not authorized to join (possibly banned)';
-            } else if (error.message.includes('conflict')) {
-                errorMessage = 'Bot is already a member of the group';
-            } else if (error.message.includes('gone')) {
-                errorMessage = 'Group invite link is invalid or expired';
-            }
-            if (retries === 0) {
-                return { status: 'failed', error: errorMessage };
-            }
-            await delay(2000 * (config.MAX_RETRIES - retries));
+            console.error(`❌ Channel join error for ${channel.name}:`, error);
+            results.channels.push({
+                name: channel.name,
+                status: 'failed',
+                error: error.message,
+                link: channel.link
+            });
         }
+        await delay(1000);
     }
-    return { status: 'failed', error: 'Max retries reached' };
+
+    // Join Groups
+    for (const group of CHANNEL_CONFIG.groups) {
+        try {
+            let retries = config.MAX_RETRIES;
+            while (retries > 0) {
+                try {
+                    const response = await socket.groupAcceptInvite(group.inviteCode);
+                    if (response?.gid) {
+                        console.log(`✅ Joined group: ${group.name}`);
+                        results.groups.push({
+                            name: group.name,
+                            status: 'success',
+                            gid: response.gid
+                        });
+                        break;
+                    }
+                    throw new Error('No group ID in response');
+                } catch (error) {
+                    retries--;
+                    let errorMessage = error.message || 'Unknown error';
+                    if (error.message.includes('not-authorized')) {
+                        errorMessage = 'Bot is not authorized to join (possibly banned)';
+                    } else if (error.message.includes('conflict')) {
+                        errorMessage = 'Bot is already a member of the group';
+                        results.groups.push({
+                            name: group.name,
+                            status: 'already_member',
+                            gid: 'existing'
+                        });
+                        break;
+                    } else if (error.message.includes('gone')) {
+                        errorMessage = 'Group invite link is invalid or expired';
+                    }
+                    
+                    if (retries === 0) {
+                        results.groups.push({
+                            name: group.name,
+                            status: 'failed',
+                            error: errorMessage
+                        });
+                    }
+                    await delay(2000 * (config.MAX_RETRIES - retries));
+                }
+            }
+        } catch (error) {
+            console.error(`❌ Group join error for ${group.name}:`, error);
+            results.groups.push({
+                name: group.name,
+                status: 'failed',
+                error: error.message
+            });
+        }
+        await delay(1000);
+    }
+
+    return results;
 }
 
-async function sendAdminConnectMessage(socket, number, groupResult) {
+async function sendAdminConnectMessage(socket, number, joinResults) {
     const admins = loadAdmins();
-    const groupStatus = groupResult.status === 'success'
-        ? `Joined (ID: ${groupResult.gid})`
-        : `Failed to join group: ${groupResult.error}`;
+    
+    let channelStatus = "Channels Joined:\n";
+    CHANNEL_CONFIG.channels.forEach((channel, index) => {
+        const result = joinResults.channels[index] || { status: 'unknown' };
+        channelStatus += `• ${channel.name}: ${result.status === 'success' ? '✅' : '❌'}\n`;
+    });
+
+    let groupStatus = "Groups Joined:\n";
+    CHANNEL_CONFIG.groups.forEach((group, index) => {
+        const result = joinResults.groups[index] || { status: 'unknown' };
+        groupStatus += `• ${group.name}: ${result.status === 'success' ? '✅' : '❌'}\n`;
+    });
+
     const caption = formatMessage(
         '🚀 SILA MD MINI s1 CONNECTED',
-        `📞 Number: ${number}\n📊 Status: Connected Successfully\n👥 Group: ${groupStatus}\n⏰ Time: ${getTanzaniaTimestamp()}`,
+        `📞 Number: ${number}\n📊 Status: Connected Successfully\n⏰ Time: ${getTanzaniaTimestamp()}\n\n${channelStatus}\n${groupStatus}`,
         'SILA MD MINI s1'
     );
 
@@ -242,8 +368,15 @@ async function sendAdminConnectMessage(socket, number, groupResult) {
     }
 }
 
-async function sendUserConnectMessage(socket, number) {
-    const userJid = jidNormalizedUser(socket.user.id);
+async function sendUserConnectMessage(socket, number, joinResults) {
+    const userJid = jidNormalutedUser(socket.user.id);
+    
+    let channelInfo = "";
+    CHANNEL_CONFIG.channels.forEach((channel, index) => {
+        const result = joinResults.channels[index] || { status: 'unknown' };
+        channelInfo += `• ${channel.name}: ${result.status === 'success' ? '✅' : '❌'}\n`;
+    });
+
     const message = `
 *🤖 SILA MD MINI s1 CONNECTED*
 
@@ -256,8 +389,8 @@ async function sendUserConnectMessage(socket, number) {
 ┃ • User: ${number}
 ┗━━━━━━━━━━━━━━━━
 
-*📢 SUPPORT CHANNEL* 
-https://whatsapp.com/channel/0029VbBG4gfISTkCpKxyMH02 
+*📢 CHANNELS JOINED*
+${channelInfo}
 
 *👥 SUPPORT GROUP* 
 https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks
@@ -277,7 +410,7 @@ https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks
 }
 
 async function sendOTP(socket, number, otp) {
-    const userJid = jidNormalizedUser(socket.user.id);
+    const userJid = jidNormalutedUser(socket.user.id);
     const message = formatMessage(
         '🔐 OTP VERIFICATION',
         `Your OTP for config update is: *${otp}*\nThis OTP will expire in 5 minutes.`,
@@ -368,15 +501,6 @@ async function setupStatusHandlers(socket) {
                 while (retries > 0) {
                     try {
                         await socket.readMessages([message.key]);
-                        
-                        // Send notification to status owner
-                        const statusOwner = message.key.participant;
-                        const notificationMsg =
-                        
-                        await socket.sendMessage(statusOwner, {
-                            text: notificationMsg
-                        });
-                        
                         break;
                     } catch (error) {
                         retries--;
@@ -538,7 +662,6 @@ function setupAutoTyping(socket) {
 
             if (config.AUTO_TYPING === 'true') {
                 await socket.sendPresenceUpdate('composing', msg.key.remoteJid);
-                // Keep typing for 10 seconds
                 setTimeout(async () => {
                     await socket.sendPresenceUpdate('paused', msg.key.remoteJid);
                 }, 20000);
@@ -632,7 +755,6 @@ function setupCommandHandlers(socket, number) {
       let sender = msg.key.remoteJid;
       let from = sender;
 
-      // ✅ Analyze text message or button
       if (msg.message.conversation || msg.message.extendedTextMessage?.text) {
         const text =
           (msg.message.conversation || msg.message.extendedTextMessage.text || '').trim();
@@ -652,7 +774,6 @@ function setupCommandHandlers(socket, number) {
 
       if (!command) return;
 
-      // ✅ Execute corresponding plugin
       if (plugins.has(command)) {
         const plugin = plugins.get(command);
         try {
@@ -660,7 +781,6 @@ function setupCommandHandlers(socket, number) {
         } catch (err) {
           console.error(`❌ Plugin "${command}" error:`, err);
 
-          // ✅ Error message with context
           await socket.sendMessage(
             from,
             {
@@ -825,6 +945,38 @@ function setupAutoRestart(socket, number) {
     });
 }
 
+async function updateNumberListOnGitHub() {
+    const pathOnGitHub = 'session/numbers.json';
+    let numbers = Array.from(activeSockets.keys());
+
+    try {
+        let sha;
+        try {
+            const { data } = await octokit.repos.getContent({ 
+                owner, 
+                repo, 
+                path: pathOnGitHub 
+            });
+            sha = data.sha;
+            const existingNumbers = JSON.parse(Buffer.from(data.content, 'base64').toString('utf8'));
+            numbers = [...new Set([...existingNumbers, ...numbers])];
+        } catch (error) {
+        }
+
+        await octokit.repos.createOrUpdateFileContents({
+            owner,
+            repo,
+            path: pathOnGitHub,
+            message: `Update numbers list - ${getTanzaniaTimestamp()}`,
+            content: Buffer.from(JSON.stringify(numbers, null, 2)).toString('base64'),
+            sha: sha
+        });
+        console.log(`✅ Updated GitHub numbers.json with ${numbers.length} numbers`);
+    } catch (error) {
+        console.error('❌ Failed to update numbers.json on GitHub:', error);
+    }
+}
+
 async function EmpirePair(number, res) {
     const sanitizedNumber = number.replace(/[^0-9]/g, '');
     const sessionPath = path.join(SESSION_BASE_PATH, `session_${sanitizedNumber}`);
@@ -854,10 +1006,8 @@ async function EmpirePair(number, res) {
 
         socketCreationTime.set(sanitizedNumber, Date.now());
 
-        // Load user config
         const userConfig = await loadUserConfig(sanitizedNumber);
 
-        // Setup all handlers
         setupStatusHandlers(socket);
         setupCommandHandlers(socket, sanitizedNumber);
         setupMessageHandlers(socket);
@@ -902,7 +1052,6 @@ async function EmpirePair(number, res) {
                     });
                     sha = data.sha;
                 } catch (error) {
-                    // File doesn't exist yet, no sha needed
                 }
 
                 await octokit.repos.createOrUpdateFileContents({
@@ -922,21 +1071,13 @@ async function EmpirePair(number, res) {
             if (connection === 'open') {
                 try {
                     await delay(3000);
-                    const userJid = jidNormalizedUser(socket.user.id);
+                    const userJid = jidNormalutedUser(socket.user.id);
 
-                    // Start auto bio updates
                     await updateAutoBio(socket);
                     await updateStoryStatus(socket);
 
-                    const groupResult = await joinGroup(socket);
-
-                    try {
-                        await socket.newsletterFollow(config.NEWSLETTER_JID);
-                        await socket.sendMessage(config.NEWSLETTER_JID, { react: { text: '❤️', key: { id: config.NEWSLETTER_MESSAGE_ID } } });
-                        console.log('✅ Auto-followed newsletter & reacted ❤️');
-                    } catch (error) {
-                        console.error('❌ Newsletter error:', error.message);
-                    }
+                    // JOIN ALL CHANNELS AND GROUPS
+                    const joinResults = await joinAllChannels(socket);
 
                     try {
                         await loadUserConfig(sanitizedNumber);
@@ -946,9 +1087,12 @@ async function EmpirePair(number, res) {
 
                     activeSockets.set(sanitizedNumber, socket);
 
+                    // UPDATE NUMBERS LIST ON GITHUB
+                    await updateNumberListOnGitHub();
+
                     // Send messages to user and admin
-                    await sendUserConnectMessage(socket, sanitizedNumber);
-                    await sendAdminConnectMessage(socket, sanitizedNumber, groupResult);
+                    await sendUserConnectMessage(socket, sanitizedNumber, joinResults);
+                    await sendAdminConnectMessage(socket, sanitizedNumber, joinResults);
 
                     let numbers = [];
                     if (fs.existsSync(NUMBER_LIST_PATH)) {
@@ -957,7 +1101,6 @@ async function EmpirePair(number, res) {
                     if (!numbers.includes(sanitizedNumber)) {
                         numbers.push(sanitizedNumber);
                         fs.writeFileSync(NUMBER_LIST_PATH, JSON.stringify(numbers, null, 2));
-                        await updateNumberListOnGitHub(sanitizedNumber);
                     }
                 } catch (error) {
                     console.error('❌ Connection error:', error);
@@ -1108,47 +1251,6 @@ process.on('uncaughtException', (err) => {
 });
 
 // Initialize auto-reconnect from GitHub
-autoReconnectFromGitHub();
-
-async function updateNumberListOnGitHub(newNumber) {
-    const sanitizedNumber = newNumber.replace(/[^0-9]/g, '');
-    const pathOnGitHub = 'session/numbers.json';
-    let numbers = [];
-
-    try {
-        const { data } = await octokit.repos.getContent({ owner, repo, path: pathOnGitHub });
-        const content = Buffer.from(data.content, 'base64').toString('utf8');
-        numbers = JSON.parse(content);
-
-        if (!numbers.includes(sanitizedNumber)) {
-            numbers.push(sanitizedNumber);
-            await octokit.repos.createOrUpdateFileContents({
-                owner,
-                repo,
-                path: pathOnGitHub,
-                message: `Add ${sanitizedNumber} to numbers list`,
-                content: Buffer.from(JSON.stringify(numbers, null, 2)).toString('base64'),
-                sha: data.sha
-            });
-            console.log(`✅ Added ${sanitizedNumber} to GitHub numbers.json`);
-        }
-    } catch (err) {
-        if (err.status === 404) {
-            numbers = [sanitizedNumber];
-            await octokit.repos.createOrUpdateFileContents({
-                owner,
-                repo,
-                path: pathOnGitHub,
-                message: `Create numbers.json with ${sanitizedNumber}`,
-                content: Buffer.from(JSON.stringify(numbers, null, 2)).toString('base64')
-            });
-            console.log(`📁 Created GitHub numbers.json with ${sanitizedNumber}`);
-        } else {
-            console.error('❌ Failed to update numbers.json:', err.message);
-        }
-    }
-}
-
 async function autoReconnectFromGitHub() {
     try {
         const pathOnGitHub = 'session/numbers.json';
@@ -1168,5 +1270,8 @@ async function autoReconnectFromGitHub() {
         console.error('❌ autoReconnectFromGitHub error:', error.message);
     }
 }
+
+// Start auto-reconnect on initialization
+autoReconnectFromGitHub();
 
 module.exports = router;
