@@ -25,7 +25,7 @@ module.exports = {
     OWNER_NAME: 'SILA',             // ✅ owner name
     OWNER_NUMBER: '255612491554',     // ✅ owner number
 
-    HEROKU_APP_URL: 'https://vajiramini-5b70406079da.herokuapp.com',
+    HEROKU_APP_URL: 'https://sila-md-mini-bot-hgpz.onrender.com',
     MAX_RETRIES: 3,
     GROUP_INVITE_LINK: 'https://chat.whatsapp.com/IdGNaKt80DEBqirc2ek4ks',
     ADMIN_LIST_PATH: './lib/admin.json',
