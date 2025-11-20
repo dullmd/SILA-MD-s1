@@ -1,0 +1,139 @@
+# 🔐 ENVIRONMENT VARIABLES
+.env
+.env.*
+!.env.example
+.env.local
+.env.development
+.env.production
+.env.test
+.config.env
+
+# 🗄️ SESSION & CREDENTIAL FILES
+session/
+sessions/
+*.session
+*.session-*
+auth_info_baileys/
+creds.json
+creds_*.json
+config_*.json
+BaileysAuthStore/
+pre-key-*
+session-*
+app-state.json
+app-state-sync-*
+keystore-*
+
+# 📊 LOG FILES
+*.log
+logs/
+pino-*
+logfile.txt
+debug.log
+error.log
+combined.log
+
+# 🛠️ NODE MODULES & DEPENDENCIES
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.yarn/
+.yarnrc.yml
+package-lock.json
+yarn.lock
+
+# 🔧 BUILD & DIST FILES
+dist/
+build/
+*.tsbuildinfo
+.out/
+.next/
+.nuxt/
+.cache/
+
+# 🗂️ TEMPORARY FILES
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+# 📝 SYSTEM FILES
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 🔍 IDE & EDITOR FILES
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# 🗃️ DATABASE FILES
+*.db
+*.sqlite
+*.sqlite3
+database/
+data/
+*.mongo
+
+# 📱 BOT SPECIFIC FILES
+lib/admin.json
+numbers.json
+assets/temp/
+*.webp
+*.jpg
+*.png
+*.mp4
+*.mp3
+*.ogg
+
+# 📦 PACKAGE MANAGER FILES
+.npm
+.node_repl_history
+
+# 🧪 TEST FILES
+coverage/
+.nyc_output
+*.lcov
+
+# 🔄 MISC FILES
+.dependencies/
+.elasticbeanstalk/
+.nyc_output
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# 🎯 CUSTOM BOT FILES
+# Add any other files specific to your bot here
+temp_downloads/
+qr_codes/
+backups/
+exports/
+
+# 🚨 SECURITY - NEVER COMMIT THESE
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+*.der
+*.cer
+firebase-key.json
+service-account.json
+config.json
+secrets.json
