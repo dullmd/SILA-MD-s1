@@ -5,14 +5,15 @@ const { exec } = require('child_process');
 const router = express.Router();
 const pino = require('pino');
 const cheerio = require('cheerio');
-const { Octokit } = require('@octokit/rest');
 const os = require('os');
 const moment = require('moment-timezone');
 const Jimp = require('jimp');
 const crypto = require('crypto');
 const axios = require('axios');
-var { updateCMDStore,isbtnID,getCMDStore,getCmdForCmdId,connectdb,input,get,updb,updfb } = require("./lib/database")
-var id_db = require('./lib/id_db')    
+
+// MongoDB Database
+const mongoDB = require('./lib/mongoDB');
+const id_db = require('./lib/id_db');
 
 const {
     default: makeWASocket,
@@ -27,8 +28,9 @@ const {
     generateWAMessageFromContent
 } = require('@whiskeysockets/baileys');
 
-const config = {
-   WELCOME: 'true',
+// Default Config
+let config = {
+    WELCOME: 'true',
     AUTO_VIEW_STATUS: 'true',
     AUTO_VOICE: 'true',
     AUTO_LIKE_STATUS: 'true',
@@ -44,26 +46,13 @@ const config = {
     NEWSLETTER_MESSAGE_ID: '428',
     OTP_EXPIRY: 300000,
     OWNER_NUMBER: '255612491554',
-    CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbBPxQTJUM2WCZLB6j28'    
-}
+    CHANNEL_LINK: 'https://whatsapp.com/channel/0029VbBPxQTJUM2WCZLB6j28'
+};
 
-// Initialize Octokit with error handling
-let octokit = null;
-try {
-    octokit = new Octokit({ 
-        auth: process.env.GITHUB_TOKEN || '' 
-    });
-} catch (error) {
-    console.log('⚠️ GitHub integration disabled:', error.message);
-}
-
-const owner = 'Sila-Md';
-const repo = 'SILA-MD-s1';
-
+// Active sockets map
 const activeSockets = new Map();
 const socketCreationTime = new Map();
 const SESSION_BASE_PATH = './session';
-const NUMBER_LIST_PATH = './numbers.json';
 const otpStore = new Map();
 
 // Auto Replies Configuration
@@ -82,6 +71,28 @@ const autoReplies = {
     'thanks': 'You\'re welcome! 😊',
     'thank you': 'Anytime! Let me know if you need help 🤖'
 };
+
+// Initialize MongoDB and load config
+(async () => {
+    try {
+        await mongoDB.connectToMongoDB();
+        await mongoDB.initializeSettings();
+        
+        // Load settings into config
+        const settings = await mongoDB.getAllSettings();
+        config = { ...config, ...settings };
+        
+        console.log('✅ MongoDB initialized successfully');
+        console.log('📊 Config loaded from database');
+        
+        // Start auto-reconnect after 5 seconds
+        setTimeout(() => {
+            autoReconnectFromMongoDB();
+        }, 5000);
+    } catch (error) {
+        console.error('❌ Failed to initialize MongoDB:', error);
+    }
+})();
 
 // Ensure session directory exists
 if (!fs.existsSync(SESSION_BASE_PATH)) {
@@ -119,7 +130,7 @@ function loadAdmins() {
             const content = safeReadFile(config.ADMIN_LIST_PATH, '[]');
             return safeJSONParse(content, []);
         }
-        return [];
+        return config.ADMIN_LIST || [];
     } catch (error) {
         console.error('Failed to load admin list:', error);
         return [];
@@ -142,7 +153,6 @@ async function cleanDuplicateFiles(number) {
     try {
         const sanitizedNumber = number.replace(/[^0-9]/g, '');
         
-        // Use local storage only for now
         const sessionDir = path.join(SESSION_BASE_PATH);
         if (!fs.existsSync(sessionDir)) return;
         
@@ -436,6 +446,7 @@ const createSerial = (size) => {
     return crypto.randomBytes(size).toString('hex').slice(0, size);
 }
 
+// Load plugins
 const plugins = new Map();
 const pluginDir = path.join(__dirname, 'plugins');
 if (fs.existsSync(pluginDir)) {
@@ -444,13 +455,17 @@ if (fs.existsSync(pluginDir)) {
             try {
                 const plugin = require(path.join(pluginDir, file));
                 if (plugin.command) {
-                    plugins.set(plugin.command, plugin);
+                    const cmds = Array.isArray(plugin.command) ? plugin.command : [plugin.command];
+                    cmds.forEach(cmd => {
+                        plugins.set(cmd, plugin);
+                    });
                 }
             } catch (error) {
                 console.log(`❌ Failed to load plugin ${file}:`, error.message);
             }
         }
     });
+    console.log(`✅ Loaded ${plugins.size} plugins`);
 }
 
 // Auto Reply Handler
@@ -488,82 +503,128 @@ function setupAutoReplyHandlers(socket) {
     });
 }
 
-// Command Handlers
-function setupCommandHandlers(socket, number) {
-  socket.ev.on('messages.upsert', async ({ messages }) => {
+// Function to send button message
+async function sendButtonMessage(socket, jid, buttonCmd, quotedMsg) {
     try {
-      const msg = messages[0];
-      if (
-        !msg.message ||
-        msg.key.remoteJid === 'status@broadcast' ||
-        msg.key.remoteJid === config.NEWSLETTER_JID
-      )
-        return;
+        const buttons = buttonCmd.buttons.map(btn => ({
+            buttonId: `${buttonCmd.command}:${btn.buttonId}`,
+            buttonText: { displayText: btn.buttonText },
+            type: btn.type || 1
+        }));
 
-      let command = null;
-      let args = [];
-      let sender = msg.key.remoteJid;
-      let from = sender;
-
-      // Analyze text message or button
-      if (msg.message.conversation || msg.message.extendedTextMessage?.text) {
-        const text =
-          (msg.message.conversation || msg.message.extendedTextMessage.text || '').trim();
-        if (text.startsWith(config.PREFIX)) {
-          const parts = text.slice(config.PREFIX.length).trim().split(/\s+/);
-          command = parts[0].toLowerCase();
-          args = parts.slice(1);
-        }
-      } else if (msg.message.buttonsResponseMessage) {
-        const buttonId = msg.message.buttonsResponseMessage.selectedButtonId;
-        if (buttonId && buttonId.startsWith(config.PREFIX)) {
-          const parts = buttonId.slice(config.PREFIX.length).trim().split(/\s+/);
-          command = parts[0].toLowerCase();
-          args = parts.slice(1);
-        }
-      }
-
-      if (!command) return;
-
-      // Execute corresponding plugin
-      if (plugins.has(command)) {
-        const plugin = plugins.get(command);
-        try {
-          await plugin.execute(socket, msg, args, number);
-        } catch (err) {
-          console.error(`❌ Plugin "${command}" error:`, err);
-          
-          await socket.sendMessage(
-            from,
-            {
-              image: { url: config.RCD_IMAGE_PATH },
-              caption: formatMessage(
-                '❌ ERROR',
-                `*THERE IS SOME PROBLEM WITH ${command} COMMAND 😥*\n\n${err.message || err}\n\n*BUT IT WILL BE FIXED SOON 😃*`,
-                '*🐢 SILA MD MINI BOT 🐢*'
-              ),
-              contextInfo: {
+        const buttonMessage = {
+            text: buttonCmd.message,
+            footer: buttonCmd.footer || '🐢 SILA MD MINI BOT 🐢',
+            buttons: buttons,
+            headerType: 1,
+            contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363422610520277@newsletter',
-                  newsletterName: '🐢 SILA MD MINI BOT 🐢',
-                  serverMessageId: 143
+                    newsletterJid: config.NEWSLETTER_JID || '120363422610520277@newsletter',
+                    newsletterName: '🐢 SILA MD MINI BOT 🐢',
+                    serverMessageId: 143
                 }
-              }
-            },
-            { quoted: msg }
-          );
+            }
+        };
+
+        if (buttonCmd.header) {
+            buttonMessage.header = buttonCmd.header;
         }
-      }
-    } catch (err) {
-      console.error('❌ Global handler error:', err);
+
+        await socket.sendMessage(jid, buttonMessage, { quoted: quotedMsg });
+    } catch (error) {
+        console.error('Error sending button message:', error);
     }
-  });
+}
+
+// Setup Button Commands Handler
+async function setupButtonCommands(socket) {
+    const buttonCommands = await mongoDB.getAllButtonCommands();
+    const buttonCommandsMap = new Map();
+    
+    buttonCommands.forEach(cmd => {
+        if (cmd && cmd.command) {
+            buttonCommandsMap.set(cmd.command.toLowerCase(), cmd);
+        }
+    });
+
+    socket.ev.on('messages.upsert', async ({ messages }) => {
+        const msg = messages[0];
+        if (!msg.message || msg.key.remoteJid === 'status@broadcast') return;
+
+        let command = null;
+        let args = [];
+        let sender = msg.key.remoteJid;
+        
+        // Check for button response
+        if (msg.message.buttonsResponseMessage) {
+            const buttonId = msg.message.buttonsResponseMessage.selectedButtonId;
+            if (buttonId) {
+                const [cmd, ...buttonArgs] = buttonId.split(':');
+                command = cmd;
+                args = buttonArgs;
+            }
+        } else if (msg.message.conversation || msg.message.extendedTextMessage?.text) {
+            const text = (msg.message.conversation || msg.message.extendedTextMessage.text || '').trim();
+            command = text.toLowerCase();
+        }
+
+        if (!command) return;
+
+        // Check if it's a button command
+        const buttonCmd = buttonCommandsMap.get(command);
+        if (buttonCmd) {
+            await sendButtonMessage(socket, sender, buttonCmd, msg);
+            return;
+        }
+
+        // Check for prefixed commands
+        if (msg.message.conversation || msg.message.extendedTextMessage?.text) {
+            const text = (msg.message.conversation || msg.message.extendedTextMessage.text || '').trim();
+            if (text.startsWith(config.PREFIX)) {
+                const parts = text.slice(config.PREFIX.length).trim().split(/\s+/);
+                command = parts[0].toLowerCase();
+                args = parts.slice(1);
+
+                // Execute plugin
+                if (plugins.has(command)) {
+                    const plugin = plugins.get(command);
+                    try {
+                        await plugin.execute(socket, msg, args, number);
+                    } catch (err) {
+                        console.error(`❌ Plugin "${command}" error:`, err);
+                        
+                        await socket.sendMessage(
+                            sender,
+                            {
+                                image: { url: config.RCD_IMAGE_PATH },
+                                caption: formatMessage(
+                                    '❌ ERROR',
+                                    `*THERE IS SOME PROBLEM WITH ${command} COMMAND 😥*\n\n${err.message || err}\n\n*BUT IT WILL BE FIXED SOON 😃*`,
+                                    '*🐢 SILA MD MINI BOT 🐢*'
+                                ),
+                                contextInfo: {
+                                    forwardingScore: 999,
+                                    isForwarded: true,
+                                    forwardedNewsletterMessageInfo: {
+                                        newsletterJid: config.NEWSLETTER_JID,
+                                        newsletterName: '🐢 SILA MD MINI BOT 🐢',
+                                        serverMessageId: 143
+                                    }
+                                }
+                            },
+                            { quoted: msg }
+                        );
+                    }
+                }
+            }
+        }
+    });
 }
 
 // GROUP WELCOME
-async function setupWelcomeHandlers(socket, config) {
+async function setupWelcomeHandlers(socket) {
   if (config.WELCOME === 'true') {
     socket.ev.on('group-participants.update', async (update) => {
       const { id: groupId, participants, action } = update;
@@ -589,7 +650,7 @@ async function setupWelcomeHandlers(socket, config) {
 *╰━━━━━━━━━━━━━━━┈⊷*`;
 
             await socket.sendMessage(groupId, {
-              image: { url: 'https://files.catbox.moe/jwmx1j.jpg' },
+              image: { url: config.RCD_IMAGE_PATH },
               caption: welcomeText,
               mentions: [user],
               contextInfo: {
@@ -597,7 +658,7 @@ async function setupWelcomeHandlers(socket, config) {
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363422610520277@newsletter',
+                  newsletterJid: config.NEWSLETTER_JID,
                   newsletterName: 'SILA MD MINI BOT',
                   serverMessageId: 143
                 }
@@ -623,7 +684,7 @@ async function setupWelcomeHandlers(socket, config) {
 *╰━━━━━━━━━━━━━━━┈⊷*`;
 
             await socket.sendMessage(groupId, {
-              image: { url: 'https://files.catbox.moe/jwmx1j.jpg' },
+              image: { url: config.RCD_IMAGE_PATH },
               caption: leftText,
               mentions: [user],
               contextInfo: {
@@ -631,7 +692,7 @@ async function setupWelcomeHandlers(socket, config) {
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363422610520277@newsletter',
+                  newsletterJid: config.NEWSLETTER_JID,
                   newsletterName: 'SILA MD MINI BOT',
                   serverMessageId: 143
                 }
@@ -663,48 +724,77 @@ function setupMessageHandlers(socket) {
     });
 }
 
+// Anti-link handler
+function setupAntiLinkHandlers(socket) {
+    socket.ev.on('messages.upsert', async ({ messages }) => {
+        for (const msg of messages) {
+            try {
+                const m = msg.message;
+                const sender = msg.key.remoteJid;
+
+                if (!m || !sender.endsWith('@g.us')) continue;
+
+                const settings = await mongoDB.getAllSettings();
+                const antilinkGroups = settings.ANTI_LINK || [];
+                const isAntilinkOn = antilinkGroups.includes(sender);
+                
+                const body = m.conversation || m.extendedTextMessage?.text || '';
+
+                const groupInviteRegex = /https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}/gi;
+                if (isAntilinkOn && groupInviteRegex.test(body)) {
+                    const groupMetadata = await socket.groupMetadata(sender);
+                    const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
+                    const isAdmin = groupAdmins.includes(msg.key.participant || msg.participant);
+
+                    if (!isAdmin) {
+                        await socket.sendMessage(sender, {
+                            text: `🚫 WhatsApp group links are not allowed!`,
+                            mentions: [msg.key.participant]
+                        }, { quoted: msg });
+
+                        await socket.sendMessage(sender, {
+                            delete: {
+                                remoteJid: sender,
+                                fromMe: false,
+                                id: msg.key.id,
+                                participant: msg.key.participant
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('Antilink Error:', e.message);
+            }
+        }
+    });
+}
+
+// Restore session from MongoDB
 async function restoreSession(number) {
     try {
         const sanitizedNumber = number.replace(/[^0-9]/g, '');
-        const sessionPath = path.join(SESSION_BASE_PATH, `creds_${sanitizedNumber}.json`);
+        const creds = await mongoDB.getSession(sanitizedNumber);
         
-        if (fs.existsSync(sessionPath)) {
-            const content = safeReadFile(sessionPath, '{}');
-            return safeJSONParse(content, null);
+        if (creds) {
+            console.log(`✅ Session restored from MongoDB for ${sanitizedNumber}`);
+            return creds;
         }
         return null;
     } catch (error) {
-        console.log(`❌ Local restore failed for ${number}: ${error.message}`);
+        console.log(`❌ MongoDB restore failed for ${number}: ${error.message}`);
         return null;
     }
 }
 
+// Load user config from MongoDB
 async function loadUserConfig(number) {
     try {
         const sanitizedNumber = number.replace(/[^0-9]/g, '');
-        const configPath = path.join(SESSION_BASE_PATH, `config_${sanitizedNumber}.json`);
-        
-        if (fs.existsSync(configPath)) {
-            const content = safeReadFile(configPath, '{}');
-            const userConfig = safeJSONParse(content, {});
-            return { ...config, ...userConfig };
-        }
-        return { ...config };
+        const settings = await mongoDB.getAllSettings();
+        return { ...config, ...settings };
     } catch (error) {
-        console.log(`❌ Local config load failed, using default: ${error.message}`);
+        console.log(`❌ Config load failed, using default: ${error.message}`);
         return { ...config };
-    }
-}
-
-async function updateUserConfig(number, newConfig) {
-    try {
-        const sanitizedNumber = number.replace(/[^0-9]/g, '');
-        const configPath = path.join(SESSION_BASE_PATH, `config_${sanitizedNumber}.json`);
-        
-        fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
-        console.log(`✅ Updated local config for ${sanitizedNumber}`);
-    } catch (error) {
-        console.log(`❌ Local config update failed: ${error.message}`);
     }
 }
 
@@ -722,69 +812,21 @@ function setupAutoRestart(socket, number) {
     });
 }
 
-// Store last message sent
-let lastGistContent = "";
-
-// Anti-link global memory
-global.antilinkGroups = global.antilinkGroups || {};
-
-// FIXED AUTO RECONNECT FUNCTION
-async function autoReconnectFromGitHub() {
+// Auto reconnect from MongoDB
+async function autoReconnectFromMongoDB() {
     try {
-        const numbersPath = path.join(SESSION_BASE_PATH, 'numbers.json');
+        const numbers = await mongoDB.getAllSessions();
         
-        // Create file if it doesn't exist
-        if (!fs.existsSync(numbersPath)) {
-            console.log('📝 Creating new numbers.json file');
-            fs.writeFileSync(numbersPath, JSON.stringify([], null, 2));
-            return;
-        }
+        console.log(`✅ Found ${numbers.length} sessions for auto-reconnect from MongoDB`);
 
-        // Read file with error handling
-        let content;
-        try {
-            content = fs.readFileSync(numbersPath, 'utf8');
-        } catch (readError) {
-            console.log('❌ Cannot read numbers.json:', readError.message);
-            return;
-        }
-
-        // Check if file is empty
-        if (!content || content.trim() === '') {
-            console.log('📝 numbers.json is empty, resetting...');
-            fs.writeFileSync(numbersPath, JSON.stringify([], null, 2));
-            return;
-        }
-
-        // Parse JSON with error handling
-        let numbers;
-        try {
-            numbers = JSON.parse(content);
-        } catch (parseError) {
-            console.log('❌ Invalid JSON in numbers.json, resetting file...');
-            // Reset file if JSON is invalid
-            fs.writeFileSync(numbersPath, JSON.stringify([], null, 2));
-            return;
-        }
-
-        // Validate if it's an array
-        if (!Array.isArray(numbers)) {
-            console.log('❌ numbers is not array, resetting...');
-            fs.writeFileSync(numbersPath, JSON.stringify([], null, 2));
-            return;
-        }
-
-        console.log(`✅ Found ${numbers.length} numbers for auto-reconnect`);
-
-        // Reconnect logic
         for (const number of numbers) {
-            if (number && typeof number === 'string' && !activeSockets.has(number)) {
+            if (number && !activeSockets.has(number)) {
                 try {
                     console.log(`🔁 Attempting to reconnect: ${number}`);
                     const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
                     await EmpirePair(number, mockRes);
                     console.log(`✅ Successfully reconnected: ${number}`);
-                    await delay(3000); // Increased delay between reconnections
+                    await delay(3000);
                 } catch (pairError) {
                     console.log(`❌ Failed to reconnect ${number}:`, pairError.message);
                 }
@@ -792,28 +834,17 @@ async function autoReconnectFromGitHub() {
         }
     } catch (error) {
         console.log('❌ Auto-reconnect failed:', error.message);
-        // Don't crash the bot - just log the error
     }
 }
 
-async function updateNumberListOnGitHub(newNumber) {
+// Update number list in MongoDB
+async function updateNumberListInMongoDB(newNumber) {
     try {
         const sanitizedNumber = newNumber.replace(/[^0-9]/g, '');
-        const numbersPath = path.join(SESSION_BASE_PATH, 'numbers.json');
-        let numbers = [];
-        
-        if (fs.existsSync(numbersPath)) {
-            const content = safeReadFile(numbersPath, '[]');
-            numbers = safeJSONParse(content, []);
-        }
-        
-        if (!numbers.includes(sanitizedNumber)) {
-            numbers.push(sanitizedNumber);
-            fs.writeFileSync(numbersPath, JSON.stringify(numbers, null, 2));
-            console.log(`✅ Added ${sanitizedNumber} to local numbers.json`);
-        }
+        // Numbers are tracked via sessions in MongoDB
+        console.log(`✅ Session will be saved for ${sanitizedNumber}`);
     } catch (err) {
-        console.log(`❌ Local numbers update failed: ${err.message}`);
+        console.log(`❌ Number update failed: ${err.message}`);
     }
 }
 
@@ -822,12 +853,14 @@ async function EmpirePair(number, res) {
     const sessionPath = path.join(SESSION_BASE_PATH, `session_${sanitizedNumber}`);
 
     await cleanDuplicateFiles(sanitizedNumber);
+    
+    // Restore session from MongoDB
     const restoredCreds = await restoreSession(sanitizedNumber);
     
     if (restoredCreds) {
         fs.ensureDirSync(sessionPath);
         fs.writeFileSync(path.join(sessionPath, 'creds.json'), JSON.stringify(restoredCreds, null, 2));
-        console.log(`✅ Successfully restored session for ${sanitizedNumber}`);
+        console.log(`✅ Successfully restored session for ${sanitizedNumber} from MongoDB`);
     }
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
@@ -846,55 +879,21 @@ async function EmpirePair(number, res) {
 
         socketCreationTime.set(sanitizedNumber, Date.now());
         
-        setupWelcomeHandlers(socket, config)
-        setupStatusHandlers(socket);
-        setupCommandHandlers(socket, sanitizedNumber);
-        setupMessageHandlers(socket);
-        setupAutoRestart(socket, sanitizedNumber);
-        setupNewsletterHandlers(socket);
-        setupChannelHandlers(socket);
-        setupAutoReplyHandlers(socket);
-        handleMessageRevocation(socket, sanitizedNumber);
-
-        // Anti-link handler
-        socket.ev.on('messages.upsert', async ({ messages }) => {
-          for (const msg of messages) {
-            try {
-              const m = msg.message;
-              const sender = msg.key.remoteJid;
-
-              if (!m || !sender.endsWith('@g.us')) continue;
-
-              const isAntilinkOn = global.antilinkGroups[sender];
-              const body = m.conversation || m.extendedTextMessage?.text || '';
-
-              const groupInviteRegex = /https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}/gi;
-              if (isAntilinkOn && groupInviteRegex.test(body)) {
-                const groupMetadata = await socket.groupMetadata(sender);
-                const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(p => p.id);
-                const isAdmin = groupAdmins.includes(msg.key.participant || msg.participant);
-
-                if (!isAdmin) {
-                  await socket.sendMessage(sender, {
-                    text: `🚫 WhatsApp group links are not allowed!`,
-                    mentions: [msg.key.participant]
-                  }, { quoted: msg });
-
-                  await socket.sendMessage(sender, {
-                    delete: {
-                      remoteJid: sender,
-                      fromMe: false,
-                      id: msg.key.id,
-                      participant: msg.key.participant
-                    }
-                  });
-                }
-              }
-            } catch (e) {
-              console.error('Antilink Error:', e.message);
-            }
-          }
-        });
+        // Load user config
+        const userConfig = await loadUserConfig(sanitizedNumber);
+        config = { ...config, ...userConfig };
+        
+        // Setup all handlers
+        await setupWelcomeHandlers(socket);
+        await setupStatusHandlers(socket);
+        await setupMessageHandlers(socket);
+        await setupAutoRestart(socket, sanitizedNumber);
+        await setupNewsletterHandlers(socket);
+        await setupChannelHandlers(socket);
+        await setupAutoReplyHandlers(socket);
+        await setupAntiLinkHandlers(socket);
+        await setupButtonCommands(socket); // Important: Button commands handler
+        await handleMessageRevocation(socket, sanitizedNumber);
         
         if (!socket.authState.creds.registered) {
             let retries = config.MAX_RETRIES;
@@ -906,7 +905,7 @@ async function EmpirePair(number, res) {
                     break;
                 } catch (error) {
                     retries--;
-                    console.warn(`Failed to request pairing code: ${retries}, error.message`, retries);
+                    console.warn(`Failed to request pairing code: ${retries}, error: ${error.message}`);
                     await delay(2000 * (config.MAX_RETRIES - retries));
                 }
             }
@@ -917,11 +916,11 @@ async function EmpirePair(number, res) {
 
         socket.ev.on('creds.update', async () => {
             await saveCreds();
-            // Save session locally
+            // Save to MongoDB
             const fileContent = await fs.readFile(path.join(sessionPath, 'creds.json'), 'utf8');
-            const localSessionPath = path.join(SESSION_BASE_PATH, `creds_${sanitizedNumber}.json`);
-            fs.writeFileSync(localSessionPath, fileContent);
-            console.log(`✅ Saved creds locally for ${sanitizedNumber}`);
+            const creds = JSON.parse(fileContent);
+            await mongoDB.saveSession(sanitizedNumber, creds);
+            console.log(`✅ Saved creds to MongoDB for ${sanitizedNumber}`);
         });
 
         socket.ev.on('connection.update', async (update) => {
@@ -944,12 +943,6 @@ async function EmpirePair(number, res) {
                         console.error('❌ Newsletter error:', error.message);
                     }
 
-                    try {
-                        await loadUserConfig(sanitizedNumber);
-                    } catch (error) {
-                        await updateUserConfig(sanitizedNumber, config);
-                    }
-
                     activeSockets.set(sanitizedNumber, socket);
 
                     const successMessage = `*╭━━━〔 🐢 SILA MD 🐢 〕━━━┈⊷*
@@ -961,14 +954,14 @@ async function EmpirePair(number, res) {
 *📢 Make sure to join our channels and groups!*`;
 
                     await socket.sendMessage(userJid, {
-                        image: { url: 'https://files.catbox.moe/jwmx1j.jpg' },
+                        image: { url: config.RCD_IMAGE_PATH },
                         caption: successMessage                    
                     });
 
                     await sendAdminConnectMessage(socket, sanitizedNumber, groupResult);
 
-                    // Update numbers list
-                    await updateNumberListOnGitHub(sanitizedNumber);
+                    // Update number in MongoDB
+                    await updateNumberListInMongoDB(sanitizedNumber);
 
                 } catch (error) {
                     console.error('Connection error:', error);
@@ -1013,20 +1006,14 @@ router.get('/ping', (req, res) => {
     res.status(200).send({
         status: 'active',
         message: '*🐢 SILA MD MINI BOT 🐢*',
-        activesession: activeSockets.size
+        activesession: activeSockets.size,
+        mongodb: 'connected'
     });
 });
 
 router.get('/connect-all', async (req, res) => {
     try {
-        const numbersPath = path.join(SESSION_BASE_PATH, 'numbers.json');
-        
-        if (!fs.existsSync(numbersPath)) {
-            return res.status(404).send({ error: 'No numbers found to connect' });
-        }
-
-        const content = safeReadFile(numbersPath, '[]');
-        const numbers = safeJSONParse(content, []);
+        const numbers = await mongoDB.getAllSessions();
 
         if (numbers.length === 0) {
             return res.status(404).send({ error: 'No numbers found to connect' });
@@ -1042,6 +1029,7 @@ router.get('/connect-all', async (req, res) => {
             const mockRes = { headersSent: false, send: () => {}, status: () => mockRes };
             await EmpirePair(number, mockRes);
             results.push({ number, status: 'connection_initiated' });
+            await delay(2000);
         }
 
         res.status(200).send({
@@ -1054,17 +1042,9 @@ router.get('/connect-all', async (req, res) => {
     }
 });
 
-// Other routes remain the same...
 router.get('/reconnect', async (req, res) => {
     try {
-        const numbersPath = path.join(SESSION_BASE_PATH, 'numbers.json');
-        
-        if (!fs.existsSync(numbersPath)) {
-            return res.status(404).send({ error: 'No numbers found to reconnect' });
-        }
-
-        const content = safeReadFile(numbersPath, '[]');
-        const numbers = safeJSONParse(content, []);
+        const numbers = await mongoDB.getAllSessions();
 
         if (numbers.length === 0) {
             return res.status(404).send({ error: 'No numbers found to reconnect' });
@@ -1098,6 +1078,43 @@ router.get('/reconnect', async (req, res) => {
     }
 });
 
+// New route to list all button commands
+router.get('/buttons', async (req, res) => {
+    try {
+        const buttons = await mongoDB.getAllButtonCommands();
+        res.status(200).send({
+            count: buttons.length,
+            buttons: buttons.map(b => ({
+                command: b.command,
+                header: b.header,
+                buttons: b.buttons.length
+            }))
+        });
+    } catch (error) {
+        res.status(500).send({ error: error.message });
+    }
+});
+
+// New route to get database stats
+router.get('/stats', async (req, res) => {
+    try {
+        const sessions = await mongoDB.getAllSessions();
+        const buttons = await mongoDB.getAllButtonCommands();
+        const contacts = await mongoDB.getContacts();
+        
+        res.status(200).send({
+            mongodb: 'connected',
+            active_sessions: activeSockets.size,
+            total_sessions: sessions.length,
+            total_buttons: buttons.length,
+            total_contacts: contacts.length,
+            uptime: process.uptime()
+        });
+    } catch (error) {
+        res.status(500).send({ error: error.message });
+    }
+});
+
 // Cleanup
 process.on('exit', () => {
     activeSockets.forEach((socket, number) => {
@@ -1112,17 +1129,9 @@ process.on('uncaughtException', (err) => {
     exec(`pm2 restart ${process.env.PM2_NAME || 'SILA-MD-MINI-session'}`);
 });
 
-// Initialize numbers.json file on startup
-function initializeNumbersFile() {
-    const numbersPath = path.join(SESSION_BASE_PATH, 'numbers.json');
-    if (!fs.existsSync(numbersPath)) {
-        console.log('📝 Initializing numbers.json file...');
-        fs.writeFileSync(numbersPath, JSON.stringify([], null, 2));
-    }
-}
-
-// Start the bot
-initializeNumbersFile();
-autoReconnectFromGitHub();
+// Start auto-reconnect on startup
+setTimeout(() => {
+    autoReconnectFromMongoDB();
+}, 5000);
 
 module.exports = router;
